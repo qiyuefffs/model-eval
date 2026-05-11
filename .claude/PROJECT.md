@@ -96,8 +96,8 @@ eval-platform/
 |---|---|---|
 | 0 | 双端脚手架 | ✅ 完成 |
 | 1 | 后端 DB + 模型 CRUD API | ✅ 完成（云端 API 模型注册，含 Fernet 加密、连通性测试） |
-| 2 | 前端基础设施（路由、主题、API 客户端） | ⏳ |
-| 3 | 模型管理页 | ⏳ |
+| 2 | 前端基础设施（路由、主题、API 客户端） | ✅ 完成（随阶段 0 一起） |
+| 3 | 模型管理页 | ✅ 完成（列表/创建/删除/连通性测试 + 标签筛选） |
 | 4 | 后端基准 + 自定义数据集 API | ⏳ |
 | 5 | 前端数据集页 | ⏳ |
 | 6 | 后端评测流水线（asyncio.Queue + SSE 日志） | ⏳ |
@@ -131,6 +131,16 @@ eval-platform/
 - 阶段 1 应用户要求**只做云端 API 模型注册**（OpenAI 兼容 URI + key），不引入本地 / HF / ModelScope 模型管理。
 - DB 表保留扩展空间（无 `model_type` 字段，所有现存记录默认是 API 型），未来若需要可加可空字段不破坏既有数据。
 
+### 前端表单与 AntD App Context
+
+- `App.useApp().message` 必须在 `<AntdApp>` 上下文内调用，否则会回退到 static API 引发 `[antd: message] Static function can not consume context`。
+- 已在 `src/App.tsx` 用 `<AntdApp>` 包裹整个 RouterProvider，所以页面内 `App.useApp()` 直接可用。
+
+### React Hook Form + Zod 配合 AntD
+
+- `Controller` 的 render prop 注入 `field={ref, value, onChange, onBlur, name}`，整体 `...field` 展开传给 AntD `Input/Select/Textarea` 不会有 ref 警告。
+- Zod 的 `default()` 用于让 `optional` 字段在 schema 输出侧仍为非空，避免 TS 推断 `string | undefined` 干扰 AntD `value` prop 的类型。
+
 ---
 
 ## 7. 后续待办（TODO 池）
@@ -143,4 +153,4 @@ eval-platform/
 
 ---
 
-**最后更新**：2026-05-11（阶段 1 完成）
+**最后更新**：2026-05-11（阶段 3 完成 — 模型管理前端页）

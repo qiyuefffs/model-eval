@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom';
 import AppLayout from './components/Layout/AppLayout';
 import Dashboard from './pages/Dashboard';
+import ModelsPage from './pages/Models';
 import Placeholder from './components/Placeholder';
 
 export const router = createBrowserRouter([
@@ -9,16 +10,7 @@ export const router = createBrowserRouter([
     element: <AppLayout />,
     children: [
       { index: true, element: <Dashboard /> },
-      {
-        path: 'models',
-        element: (
-          <Placeholder
-            title="模型管理"
-            stage="阶段 1 / 3"
-            description="注册云端 API 模型与本地模型，统一管理 API key 与连通性测试。"
-          />
-        ),
-      },
+      { path: 'models', element: <ModelsPage /> },
       {
         path: 'datasets',
         element: (
