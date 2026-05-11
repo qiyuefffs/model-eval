@@ -8,8 +8,10 @@ from fastapi.responses import ORJSONResponse
 from loguru import logger
 
 from api.health import router as health_router
+from api.models import router as models_router
 from core.config import get_settings
 from core.logger import setup_logging
+from db.database import init_db
 
 
 @asynccontextmanager
@@ -22,7 +24,8 @@ async def lifespan(app: FastAPI):
     logger.info(f"产物目录：{settings.outputs_dir}")
     logger.info(f"调试模式：{settings.debug}")
 
-    # TODO 阶段 1：初始化数据库连接、运行待处理迁移
+    await init_db()
+
     # TODO 阶段 6：启动 eval/perf worker
 
     yield
@@ -51,6 +54,7 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(health_router)
+    app.include_router(models_router)
 
     @app.get("/", tags=["root"], summary="根路径")
     async def root() -> dict:

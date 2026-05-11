@@ -65,6 +65,10 @@ exclude = [".venv", "alembic/versions"]
 select = ["E", "F", "I", "W", "N", "UP", "B", "SIM"]
 ignore = ["E501"]  # 行长由 formatter 控制
 
+[tool.ruff.lint.per-file-ignores]
+# FastAPI 路由的 Depends/Path/Query 默认参数是官方惯用法，B008 误报
+"api/*.py" = ["B008"]
+
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"

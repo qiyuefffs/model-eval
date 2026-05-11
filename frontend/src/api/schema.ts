@@ -24,6 +24,68 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 模型列表
+         * @description 返回所有已注册模型，按创建时间倒序。API Key 仅返回脱敏预览。
+         */
+        get: operations["list_models_endpoint_api_models_get"];
+        put?: never;
+        /**
+         * 注册新模型
+         * @description 通过 URI + API Key 注册一个云端 OpenAI 兼容模型。API Key 会被加密存储。
+         */
+        post: operations["create_model_endpoint_api_models_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/models/{model_pk}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 模型详情 */
+        get: operations["get_model_endpoint_api_models__model_pk__get"];
+        put?: never;
+        post?: never;
+        /** 删除模型 */
+        delete: operations["delete_model_endpoint_api_models__model_pk__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/models/{model_pk}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 测试模型连通性
+         * @description 对模型 endpoint 发一次最小 chat completion 请求验证可达性与鉴权。
+         */
+        post: operations["test_model_endpoint_api_models__model_pk__test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/": {
         parameters: {
             query?: never;
@@ -45,6 +107,37 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * ConnectivityTestResult
+         * @description 连通性测试结果。
+         */
+        ConnectivityTestResult: {
+            /**
+             * Ok
+             * @description 连通性测试是否通过
+             */
+            ok: boolean;
+            /**
+             * Latency Ms
+             * @description 单次请求耗时（毫秒）
+             */
+            latency_ms?: number | null;
+            /**
+             * Http Status
+             * @description HTTP 状态码
+             */
+            http_status?: number | null;
+            /**
+             * Detail
+             * @description 详细信息：成功时为 'OK' 或返回内容片段，失败时为错误描述
+             */
+            detail: string;
+        };
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
+        };
         /** HealthResponse */
         HealthResponse: {
             /** Status */
@@ -55,6 +148,83 @@ export interface components {
             version: string;
             /** Timestamp */
             timestamp: string;
+        };
+        /**
+         * ModelCreate
+         * @description 注册新模型的请求体。
+         */
+        ModelCreate: {
+            /**
+             * Name
+             * @description 显示名，全表唯一
+             */
+            name: string;
+            /**
+             * Model Id
+             * @description 平台侧模型 ID，如 deepseek-chat
+             */
+            model_id: string;
+            /**
+             * Api Url
+             * Format: uri
+             * @description OpenAI 兼容的 chat completions 端点 URL
+             */
+            api_url: string;
+            /**
+             * Api Key
+             * @description API Key，存储时会加密
+             */
+            api_key: string;
+            /** Description */
+            description?: string | null;
+            /** Tags */
+            tags?: string[];
+        };
+        /**
+         * ModelRead
+         * @description 模型详情响应（出参，不含明文 key）。
+         */
+        ModelRead: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Model Id */
+            model_id: string;
+            /** Api Url */
+            api_url: string;
+            /**
+             * Api Key Preview
+             * @description 脱敏后的 API key，如 sk-a...xyz9
+             */
+            api_key_preview: string;
+            /** Description */
+            description: string | null;
+            /** Tags */
+            tags: string[];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** ValidationError */
+        ValidationError: {
+            /** Location */
+            loc: (string | number)[];
+            /** Message */
+            msg: string;
+            /** Error Type */
+            type: string;
+            /** Input */
+            input?: unknown;
+            /** Context */
+            ctx?: Record<string, never>;
         };
     };
     responses: never;
@@ -81,6 +251,151 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+        };
+    };
+    list_models_endpoint_api_models_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModelRead"][];
+                };
+            };
+        };
+    };
+    create_model_endpoint_api_models_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ModelCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModelRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_model_endpoint_api_models__model_pk__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 模型主键 id */
+                model_pk: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModelRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_model_endpoint_api_models__model_pk__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                model_pk: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    test_model_endpoint_api_models__model_pk__test_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                model_pk: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectivityTestResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

@@ -94,8 +94,8 @@ eval-platform/
 
 | 阶段 | 内容 | 状态 |
 |---|---|---|
-| 0 | 双端脚手架 | 🚧 进行中 |
-| 1 | 后端 DB + 模型 CRUD API | ⏳ |
+| 0 | 双端脚手架 | ✅ 完成 |
+| 1 | 后端 DB + 模型 CRUD API | ✅ 完成（云端 API 模型注册，含 Fernet 加密、连通性测试） |
 | 2 | 前端基础设施（路由、主题、API 客户端） | ⏳ |
 | 3 | 模型管理页 | ⏳ |
 | 4 | 后端基准 + 自定义数据集 API | ⏳ |
@@ -121,6 +121,16 @@ eval-platform/
 
 - evalscope 默认在 `--work-dir` 下创建 `<时间戳>` 子目录。本项目所有任务统一 `--work-dir ./outputs`，由后端拼时间戳便于关联 task_id。
 
+### Ruff B008 误报
+
+- FastAPI 的 `Depends() / Path() / Query()` 在参数默认值是官方惯用法，与 ruff B008（"不要在默认参数里调用函数"）冲突。
+- 对策：`pyproject.toml` 的 `[tool.ruff.lint.per-file-ignores]` 给 `api/*.py` 加白名单 `B008`。
+
+### 模型范围限定
+
+- 阶段 1 应用户要求**只做云端 API 模型注册**（OpenAI 兼容 URI + key），不引入本地 / HF / ModelScope 模型管理。
+- DB 表保留扩展空间（无 `model_type` 字段，所有现存记录默认是 API 型），未来若需要可加可空字段不破坏既有数据。
+
 ---
 
 ## 7. 后续待办（TODO 池）
@@ -133,4 +143,4 @@ eval-platform/
 
 ---
 
-**最后更新**：2026-05-11（阶段 0 启动）
+**最后更新**：2026-05-11（阶段 1 完成）

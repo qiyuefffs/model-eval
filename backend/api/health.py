@@ -1,12 +1,11 @@
 """健康检查接口。"""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter
 from pydantic import BaseModel
 
 from core.config import get_settings
-
 
 router = APIRouter(prefix="/api", tags=["health"])
 
@@ -26,5 +25,5 @@ async def health_check() -> HealthResponse:
         status="ok",
         app_name=settings.app_name,
         version=settings.app_version,
-        timestamp=datetime.now(timezone.utc).isoformat(),
+        timestamp=datetime.now(UTC).isoformat(),
     )
