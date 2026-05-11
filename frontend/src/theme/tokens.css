@@ -1,0 +1,71 @@
+/* 设计 token — 与 Tailwind 配置同步，可在 AntD 主题与原生 CSS 中通用 */
+
+:root {
+  --bg-primary: #0a0e14;
+  --bg-secondary: #11161d;
+  --bg-elevated: #1a212c;
+
+  --accent-primary: #50c878;
+  --accent-warning: #ffb454;
+  --accent-danger: #ff5370;
+  --accent-info: #6ab7ff;
+
+  --text-primary: #e6e1cf;
+  --text-secondary: #b3b1ad;
+  --text-muted: #5c6773;
+
+  --border-subtle: #1f2731;
+  --border-strong: #3d4a5c;
+
+  --font-sans: 'Manrope', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* 全局基础样式 */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-feature-settings: 'cv11', 'ss01';
+
+  /* subtle 网格背景 — 工程师友好 */
+  background-image:
+    linear-gradient(rgba(80, 200, 120, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(80, 200, 120, 0.025) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+code,
+pre,
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* 全局滚动条 */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 4px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-primary);
+}
+
+/* 隐藏 AntD 默认的 wave 涟漪噪点（与暗色不搭） */
+.ant-wave {
+  display: none !important;
+}

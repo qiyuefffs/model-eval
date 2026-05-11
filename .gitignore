@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Node / 前端
+node_modules/
+frontend/dist/
+frontend/.vite/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+
+# 数据库
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# 评测产物（仅保留报告，不入库原始预测）
+outputs/
+!outputs/.gitkeep
+reports/*.html
+reports/*.pdf
+!reports/.gitkeep
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# 评测缓存
+.cache/
+~/.cache/
