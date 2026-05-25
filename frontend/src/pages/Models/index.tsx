@@ -122,7 +122,10 @@ export default function ModelsPage() {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3, delay: 0.15 }}
       >
-        <Card style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-default)' }}>
+        <Card
+          className="scroll-card page-table-card"
+          style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border-default)' }}
+        >
           <ModelTable />
         </Card>
       </motion.div>

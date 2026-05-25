@@ -9,8 +9,13 @@ import {
   ThunderboltOutlined,
 } from '@ant-design/icons';
 import { useHealth } from '@/api/hooks/useHealth';
+import { useModels } from '@/api/hooks/useModels';
+import { useBenchmarks } from '@/api/hooks/useDatasets';
+import { useEvalTasks } from '@/api/hooks/useEvalTasks';
+import { usePerfTasks } from '@/api/hooks/usePerfTasks';
 
 const { Title, Paragraph, Text } = Typography;
+const RUNNING_STATUSES = new Set(['pending', 'running']);
 
 const cardMotion = {
   initial: { opacity: 0, y: 12 },
@@ -20,14 +25,52 @@ const cardMotion = {
 /**
  * Dashboard — 平台首页
  *
- * 阶段 0 仅展示：后端连通状态 + 占位统计卡片。
- * 后续阶段会替换为真实数据（任务数、模型数、运行中任务等）。
+ * Dashboard — 平台首页概览。
+ * 展示后端连通状态和关键资源/任务统计。
  */
 export default function Dashboard() {
   const { data: health, isLoading, isError } = useHealth();
+  const { data: models, isLoading: modelsLoading } = useModels();
+  const { data: benchmarks, isLoading: benchmarksLoading } = useBenchmarks();
+  const { data: evalTasks, isLoading: evalTasksLoading } = useEvalTasks();
+  const { data: perfTasks, isLoading: perfTasksLoading } = usePerfTasks();
+  const allTasks = [...(evalTasks ?? []), ...(perfTasks ?? [])];
+  const runningTasks = allTasks.filter((task) => RUNNING_STATUSES.has(task.status)).length;
+  const completedTasks = allTasks.filter((task) => task.status === 'succeeded').length;
+  const statsLoading = modelsLoading || benchmarksLoading || evalTasksLoading || perfTasksLoading;
+  const stats = [
+    {
+      icon: <DatabaseOutlined />,
+      title: '已注册模型',
+      value: models?.length ?? 0,
+      color: 'var(--accent-info)',
+      delay: 0.15,
+    },
+    {
+      icon: <ExperimentOutlined />,
+      title: '内置评测基准',
+      value: benchmarks?.length ?? 0,
+      color: 'var(--accent-primary)',
+      delay: 0.2,
+    },
+    {
+      icon: <ThunderboltOutlined />,
+      title: '运行中任务',
+      value: runningTasks,
+      color: 'var(--accent-warning)',
+      delay: 0.25,
+    },
+    {
+      icon: <Badge status="success" />,
+      title: '历史评测',
+      value: completedTasks,
+      color: 'var(--text-secondary)',
+      delay: 0.3,
+    },
+  ];
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto">
       {/* 标题区 */}
       <motion.div {...cardMotion} transition={{ duration: 0.4 }}>
         <Space direction="vertical" size={4} style={{ marginBottom: 32 }}>
@@ -71,7 +114,7 @@ export default function Dashboard() {
               <Text type="secondary" style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>
                 请确认后端服务已启动：
                 <Text code copyable style={{ marginLeft: 8 }}>
-                  cd backend && uv run uvicorn main:app --reload --port 8000
+                  ./scripts/start-dev.sh
                 </Text>
               </Text>
             </Space>
@@ -104,84 +147,36 @@ export default function Dashboard() {
         </Card>
       </motion.div>
 
-      {/* 占位统计卡片（阶段 1+ 会替换为真实数据） */}
+      {/* 关键资源与任务统计 */}
       <Row gutter={[16, 16]}>
-        {[
-          {
-            icon: <DatabaseOutlined />,
-            title: '已注册模型',
-            value: 0,
-            color: 'var(--accent-info)',
-            delay: 0.15,
-          },
-          {
-            icon: <ExperimentOutlined />,
-            title: '内置评测基准',
-            value: 123,
-            suffix: '+',
-            color: 'var(--accent-primary)',
-            delay: 0.2,
-          },
-          {
-            icon: <ThunderboltOutlined />,
-            title: '运行中任务',
-            value: 0,
-            color: 'var(--accent-warning)',
-            delay: 0.25,
-          },
-          {
-            icon: <Badge status="default" />,
-            title: '历史评测',
-            value: 0,
-            color: 'var(--text-secondary)',
-            delay: 0.3,
-          },
-        ].map((stat) => (
+        {stats.map((stat) => (
           <Col key={stat.title} xs={24} sm={12} lg={6}>
             <motion.div {...cardMotion} transition={{ duration: 0.4, delay: stat.delay }}>
               <Card hoverable style={{ borderColor: 'var(--border-subtle)' }}>
-                <Statistic
-                  title={
-                    <Space style={{ color: 'var(--text-secondary)' }}>
-                      <span style={{ color: stat.color }}>{stat.icon}</span>
-                      {stat.title}
-                    </Space>
-                  }
-                  value={stat.value}
-                  suffix={stat.suffix}
-                  valueStyle={{
-                    color: stat.color,
-                    fontFamily: 'var(--font-mono)',
-                    fontWeight: 600,
-                  }}
-                />
+                {statsLoading ? (
+                  <Skeleton active paragraph={false} />
+                ) : (
+                  <Statistic
+                    title={
+                      <Space style={{ color: 'var(--text-secondary)' }}>
+                        <span style={{ color: stat.color }}>{stat.icon}</span>
+                        {stat.title}
+                      </Space>
+                    }
+                    value={stat.value}
+                    valueStyle={{
+                      color: stat.color,
+                      fontFamily: 'var(--font-mono)',
+                      fontWeight: 600,
+                    }}
+                  />
+                )}
               </Card>
             </motion.div>
           </Col>
         ))}
       </Row>
 
-      {/* 阶段提示 */}
-      <motion.div {...cardMotion} transition={{ duration: 0.4, delay: 0.4 }}>
-        <Card
-          style={{
-            marginTop: 24,
-            borderColor: 'var(--border-subtle)',
-            background:
-              'linear-gradient(135deg, rgba(80,200,120,0.05) 0%, rgba(106,183,255,0.03) 100%)',
-          }}
-        >
-          <Space direction="vertical" size="small">
-            <Text strong style={{ fontFamily: 'var(--font-mono)' }}>
-              🚧 阶段 0：双端脚手架就绪
-            </Text>
-            <Text type="secondary" style={{ fontSize: 13 }}>
-              后端 FastAPI 健康检查接口已通；下一阶段将实现：数据库 schema、模型注册管理 API
-              与可视化页面。
-            </Text>
-          </Space>
-        </Card>
-      </motion.div>
     </div>
   );
 }

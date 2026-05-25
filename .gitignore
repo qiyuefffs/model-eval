@@ -9,6 +9,7 @@ venv/
 .env
 .env.*
 !.env.example
+!.env.docker.example
 *.egg-info/
 dist/
 build/
@@ -27,10 +28,17 @@ pnpm-debug.log*
 yarn-debug.log*
 
 # 数据库
+platform.db
 *.db
 *.db-journal
 *.sqlite
 *.sqlite3
+
+# 压缩包 / 离线交付包
+*.zip
+*.tar
+*.tar.gz
+*.tgz
 
 # 评测产物（仅保留报告，不入库原始预测）
 outputs/
@@ -38,6 +46,10 @@ outputs/
 reports/*.html
 reports/*.pdf
 !reports/.gitkeep
+data/
+logs/
+release/
+release.zip
 
 # IDE
 .idea/

@@ -36,13 +36,52 @@ make install
 
 # 2. 同时启动前后端（推荐开发用）
 make dev
+
+# 或直接运行启动脚本
+./scripts/start-dev.sh
 ```
 
 启动后：
 
 - 前端：[http://localhost:5173](http://localhost:5173)
-- 后端 API：[http://localhost:8000](http://localhost:8000)
-- API 文档：[http://localhost:8000/docs](http://localhost:8000/docs)
+- 后端 API：[http://localhost:8001](http://localhost:8001)
+- API 文档：[http://localhost:8001/docs](http://localhost:8001/docs)
+
+### Docker 一键部署
+
+```bash
+# 构建并启动完整环境
+make docker-up
+
+# 查看日志
+docker compose logs -f
+
+# 停止服务
+make docker-down
+```
+
+Docker 启动后：
+
+- 前端：[http://localhost:8080](http://localhost:8080)
+- 后端 API：[http://localhost:8001](http://localhost:8001)
+- API 文档：[http://localhost:8001/docs](http://localhost:8001/docs)
+
+数据会保存到项目根目录 `data/`，包括 SQLite、评测产物、自定义数据集和导出报告。
+
+### Docker 离线软件包
+
+```bash
+make docker-package
+```
+
+生成内容位于 `release/`：
+
+- `eval-platform-docker-<版本>.tar.gz`：前后端镜像包
+- `docker-compose.yml`：部署编排文件
+- `.env.example`：部署环境变量模板
+- `README-docker.md`：目标机器部署说明
+
+Docker 打包配置与操作记录见 [`docs/DOCKER_PACKAGE_RECORD.md`](./docs/DOCKER_PACKAGE_RECORD.md)。
 
 ### 分开启动
 
@@ -98,16 +137,16 @@ eval-platform/
 |---|---|---|
 | 双端脚手架 + 健康检查 | ✅ 已完成 | 0 |
 | 模型注册（云端 API）+ 连通性测试 | ✅ 已完成 | 1 |
-| 模型管理前端页面 | 🚧 下一步 | 3 |
-| 内置基准浏览（123+） | ⏳ | 4 / 5 |
-| 自定义数据集上传 | ⏳ | 4 / 5 |
-| 质量评测流水线（异步队列） | ⏳ | 6 / 7 |
+| 模型管理前端页面 | ✅ 已完成 | 3 |
+| 内置基准浏览（123+） | ✅ 已完成 | 4 / 5 |
+| 自定义数据集上传 | ✅ 已完成 | 4 / 5 |
+| 质量评测流水线（异步队列） | ✅ 已完成 | 6 / 7 |
 | 实时日志（SSE） | ⏳ | 7 |
-| 性能压测（TTFT/TPOT/SLA） | ⏳ | 8 / 9 |
-| 报告对比（雷达图 + 趋势） | ⏳ | 10 |
-| 报告导出（Markdown / HTML） | ⏳ | 10 |
+| 性能压测（TTFT/TPOT/SLA） | ✅ 已完成 | 8 / 9 |
+| 报告对比（雷达图 + 趋势） | ✅ 已完成 | 10 |
+| 报告导出（Markdown / HTML） | ✅ 已完成 | 10 |
 
-详细技术决策与踩坑记录见 [`.claude/PROJECT.md`](./.claude/PROJECT.md)。
+开发流程文档见 [`docs/DEVELOPMENT_PROCESS.md`](./docs/DEVELOPMENT_PROCESS.md)，详细技术决策与踩坑记录见 [`.claude/PROJECT.md`](./.claude/PROJECT.md)。
 
 ---
 

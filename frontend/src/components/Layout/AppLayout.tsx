@@ -23,7 +23,7 @@ const menuItems: MenuItem[] = [
   { key: '/datasets', icon: <DatabaseOutlined />, label: '数据集' },
   { key: '/eval', icon: <ExperimentOutlined />, label: '质量评测' },
   { key: '/perf', icon: <ThunderboltOutlined />, label: '性能压测' },
-  { key: '/tasks', icon: <UnorderedListOutlined />, label: '任务监控' },
+  { key: '/tasks', icon: <UnorderedListOutlined />, label: '任务中心' },
   { key: '/reports', icon: <BarChartOutlined />, label: '报告对比' },
 ];
 
@@ -118,7 +118,7 @@ export default function AppLayout() {
           </Typography.Text>
         </Header>
 
-        <Content style={{ overflow: 'auto' }}>
+        <Content className="app-content">
           <Outlet />
         </Content>
       </Layout>

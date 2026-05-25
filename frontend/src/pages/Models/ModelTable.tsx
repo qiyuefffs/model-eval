@@ -213,7 +213,7 @@ export default function ModelTable() {
         loading={isLoading}
         columns={columns}
         dataSource={filtered}
-        scroll={{ x: 1200 }}
+        scroll={{ x: 1200, y: 430 }}
         pagination={{
           pageSize: 20,
           showTotal: (total) => `共 ${total} 个模型`,

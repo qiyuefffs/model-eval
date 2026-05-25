@@ -25,17 +25,27 @@ pnpm dev
 - **表单**：React Hook Form + Zod
 - **图表**：ECharts
 - **动画**：Framer Motion
-- **HTTP**：Axios（开发期 `/api` 代理到 8000）
+- **HTTP**：Axios（开发期 `/api` 代理到 8001）
 
 ## 与后端联调
 
-开发期 Vite dev server 把 `/api/**` 自动代理到 `http://localhost:8000`，无需 CORS 也不用改 baseURL。
+开发期 Vite dev server 把 `/api/**` 自动代理到 `http://localhost:8001`，无需 CORS 也不用改 baseURL。
 
 后端启动后：
 
 ```bash
 pnpm gen:api  # 拉取 OpenAPI schema 生成 TS 类型
 ```
+
+## 当前页面
+
+- `/`：总览。
+- `/models`：模型管理。
+- `/datasets`：内置 benchmark 与自定义数据集。
+- `/eval`：质量评测任务创建。
+- `/perf`：性能压测任务创建与指标摘要。
+- `/tasks`：任务中心，聚合质量评测与性能压测的运行队列、失败诊断与最近完成。
+- `/reports`：结果分析台，按质量/性能切换并多选任务做可视化对比和导出。
 
 ## 视觉规范
 

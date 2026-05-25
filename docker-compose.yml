@@ -1,0 +1,40 @@
+services:
+  backend:
+    image: eval-platform-backend:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    environment:
+      APP_NAME: EvalPlatform
+      APP_VERSION: 0.1.0
+      DEBUG: "false"
+      HOST: 0.0.0.0
+      PORT: 8001
+      DATABASE_URL: sqlite+aiosqlite:////data/platform.db
+      OUTPUTS_DIR: /data/outputs
+      REPORTS_DIR: /data/reports
+      CUSTOM_DATASETS_DIR: /data/custom_datasets
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-please-change-in-production-32bytes}
+    volumes:
+      - ./data:/data
+    ports:
+      - "${BACKEND_PORT:-8001}:8001"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8001/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  frontend:
+    image: eval-platform-frontend:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    restart: unless-stopped

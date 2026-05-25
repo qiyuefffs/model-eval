@@ -43,6 +43,58 @@ body {
   background-size: 32px 32px;
 }
 
+.app-content {
+  height: calc(100vh - 64px);
+  overflow: hidden;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.app-content > div {
+  height: 100%;
+  min-width: 0;
+  overflow: auto;
+  padding-right: 4px;
+  box-sizing: border-box;
+}
+
+.scroll-card {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.scroll-card > .ant-card-body {
+  min-height: 0;
+  overflow: auto;
+}
+
+.page-section-card {
+  max-height: calc(100vh - 260px);
+}
+
+.page-panel-card {
+  height: 380px;
+  min-height: 380px;
+}
+
+.task-center-panel-table .ant-table-body {
+  height: 292px;
+  overflow-y: auto !important;
+}
+
+.page-form-card {
+  max-height: calc(100vh - 250px);
+}
+
+.page-table-card {
+  max-height: calc(100vh - 250px);
+}
+
+.page-chart-card {
+  max-height: calc(100vh - 300px);
+}
+
 code,
 pre,
 .font-mono {

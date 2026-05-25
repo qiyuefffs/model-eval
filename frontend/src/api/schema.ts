@@ -86,6 +86,200 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/benchmarks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 内置 benchmark 列表
+         * @description 返回 EvalScope 内置 benchmark 元信息，支持关键字、标签、后端和评测类型过滤。
+         */
+        get: operations["list_benchmarks_endpoint_api_benchmarks_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/datasets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 自定义数据集列表 */
+        get: operations["list_datasets_endpoint_api_datasets_get"];
+        put?: never;
+        /**
+         * 上传自定义数据集
+         * @description 上传 JSON/JSONL 数据集，并按 general_qa/general_mcq/general_fc 做基础格式校验。
+         */
+        post: operations["create_dataset_endpoint_api_datasets_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/datasets/{dataset_pk}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** 删除自定义数据集 */
+        delete: operations["delete_dataset_endpoint_api_datasets__dataset_pk__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/eval-tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 质量评测任务列表 */
+        get: operations["list_eval_tasks_endpoint_api_eval_tasks_get"];
+        put?: never;
+        /**
+         * 创建质量评测任务
+         * @description 创建任务后立即加入后台队列，由 eval worker 调用 EvalScope Python API 执行。
+         */
+        post: operations["create_eval_task_endpoint_api_eval_tasks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/eval-tasks/{task_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 质量评测任务详情 */
+        get: operations["get_eval_task_endpoint_api_eval_tasks__task_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perf-tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 性能压测任务列表 */
+        get: operations["list_perf_tasks_endpoint_api_perf_tasks_get"];
+        put?: never;
+        /**
+         * 创建性能压测任务
+         * @description 创建任务后加入独立性能压测队列，调用 EvalScope perf 执行 OpenAI 兼容接口压测。
+         */
+        post: operations["create_perf_task_endpoint_api_perf_tasks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perf-tasks/{task_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 性能压测任务详情 */
+        get: operations["get_perf_task_endpoint_api_perf_tasks__task_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 报告任务候选列表
+         * @description 返回报告页可选择的已完成质量评测或性能压测任务。
+         */
+        get: operations["list_report_tasks_endpoint_api_reports_tasks_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/compare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 报告对比
+         * @description 聚合质量评测与性能压测结果，返回前端图表所需摘要。
+         */
+        post: operations["compare_reports_endpoint_api_reports_compare_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/reports/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * 导出报告
+         * @description 生成 Markdown 或 HTML 报告并保存到 reports 目录。
+         */
+        post: operations["export_report_endpoint_api_reports_export_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/": {
         parameters: {
             query?: never;
@@ -107,6 +301,80 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * BenchmarkInfo
+         * @description EvalScope 内置 benchmark 元信息。
+         */
+        BenchmarkInfo: {
+            /**
+             * Name
+             * @description EvalScope 数据集名称
+             */
+            name: string;
+            /**
+             * Display Name
+             * @description 前端展示名
+             */
+            display_name: string;
+            /**
+             * Description
+             * @description 简要说明
+             * @default
+             */
+            description: string;
+            /**
+             * Tags
+             * @description 领域标签
+             */
+            tags?: string[];
+            /**
+             * Backends
+             * @description 支持的评测后端
+             */
+            backends?: string[];
+            /**
+             * Subsets
+             * @description 可选子集名称；为空表示未暴露子集
+             */
+            subsets?: string[];
+            /**
+             * Eval Type
+             * @description 评测类型：quality/perf
+             * @default quality
+             */
+            eval_type: string;
+            /**
+             * Source
+             * @description 来源：evalscope/builtin
+             * @default builtin
+             */
+            source: string;
+        };
+        /** Body_create_dataset_endpoint_api_datasets_post */
+        Body_create_dataset_endpoint_api_datasets_post: {
+            /**
+             * Name
+             * @description 数据集名称
+             */
+            name: string;
+            /**
+             * Dataset Type
+             * @description general_qa/general_mcq/general_fc
+             */
+            dataset_type: string;
+            /**
+             * File
+             * @description JSON 或 JSONL 文件
+             */
+            file: string;
+            /** Description */
+            description?: string | null;
+            /**
+             * Tags
+             * @description 逗号分隔标签
+             */
+            tags?: string | null;
+        };
         /**
          * ConnectivityTestResult
          * @description 连通性测试结果。
@@ -132,6 +400,229 @@ export interface components {
              * @description 详细信息：成功时为 'OK' 或返回内容片段，失败时为错误描述
              */
             detail: string;
+        };
+        /**
+         * CustomDatasetRead
+         * @description 自定义数据集响应。
+         */
+        CustomDatasetRead: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Dataset Type */
+            dataset_type: string;
+            /** File Name */
+            file_name: string;
+            /** File Format */
+            file_format: string;
+            /** Row Count */
+            row_count: number;
+            /** Description */
+            description: string | null;
+            /** Tags */
+            tags: string[];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * EvalDatasetScore
+         * @description 质量评测数据集分数。
+         */
+        EvalDatasetScore: {
+            /** Task Id */
+            task_id: number;
+            /** Task Name */
+            task_name: string;
+            /** Model Name */
+            model_name: string;
+            /** Dataset Name */
+            dataset_name: string;
+            /** Metric Name */
+            metric_name?: string | null;
+            /** Score */
+            score?: number | null;
+            /** Metrics */
+            metrics?: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * EvalResultRead
+         * @description 评测结果摘要。
+         */
+        EvalResultRead: {
+            /** Id */
+            id: number;
+            /** Task Id */
+            task_id: number;
+            /** Dataset Name */
+            dataset_name: string;
+            /** Metric Name */
+            metric_name: string | null;
+            /** Score */
+            score: number | null;
+            /** Metrics */
+            metrics: {
+                [key: string]: unknown;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /**
+         * EvalScoreMatrixRow
+         * @description 质量评测矩阵行。
+         */
+        EvalScoreMatrixRow: {
+            /** Task Id */
+            task_id: number;
+            /** Task Name */
+            task_name: string;
+            /** Model Name */
+            model_name: string;
+            /** Scores */
+            scores?: {
+                [key: string]: number | null;
+            };
+        };
+        /**
+         * EvalTaskCreate
+         * @description 创建质量评测任务的请求体。
+         */
+        EvalTaskCreate: {
+            /**
+             * Name
+             * @description 任务名称
+             */
+            name: string;
+            /**
+             * Model Pk
+             * @description 模型主键 id
+             */
+            model_pk: number;
+            /**
+             * Benchmark Names
+             * @description 内置 benchmark 名称
+             */
+            benchmark_names?: string[];
+            /**
+             * Custom Dataset Ids
+             * @description 自定义数据集 id
+             */
+            custom_dataset_ids?: number[];
+            /**
+             * Eval Backend
+             * @default Native
+             */
+            eval_backend: string;
+            /**
+             * Eval Batch Size
+             * @default 1
+             */
+            eval_batch_size: number;
+            /**
+             * Limit
+             * @description 最大样本数或比例
+             */
+            limit?: number | null;
+            /**
+             * Generation Config
+             * @description EvalScope 生成参数
+             */
+            generation_config?: {
+                [key: string]: unknown;
+            };
+            /**
+             * Dataset Args
+             * @description 附加 dataset_args
+             */
+            dataset_args?: {
+                [key: string]: unknown;
+            };
+            /** Description */
+            description?: string | null;
+            /** Tags */
+            tags?: string[];
+        };
+        /**
+         * EvalTaskRead
+         * @description 质量评测任务响应。
+         */
+        EvalTaskRead: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Model Pk */
+            model_pk: number;
+            /** Model Name */
+            model_name: string;
+            /** Model Id */
+            model_id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "running" | "succeeded" | "failed";
+            /** Benchmark Names */
+            benchmark_names: string[];
+            /** Custom Dataset Ids */
+            custom_dataset_ids: number[];
+            /** Dataset Args */
+            dataset_args: {
+                [key: string]: unknown;
+            };
+            /** Generation Config */
+            generation_config: {
+                [key: string]: unknown;
+            };
+            /** Eval Backend */
+            eval_backend: string;
+            /** Eval Batch Size */
+            eval_batch_size: number;
+            /** Limit */
+            limit: number | null;
+            /** Work Dir */
+            work_dir: string | null;
+            /** Log Path */
+            log_path: string | null;
+            /** Result Summary */
+            result_summary: {
+                [key: string]: unknown;
+            } | null;
+            /** Error Message */
+            error_message: string | null;
+            /** Description */
+            description: string | null;
+            /** Tags */
+            tags: string[];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Started At */
+            started_at: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /** Results */
+            results?: components["schemas"]["EvalResultRead"][];
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -212,6 +703,453 @@ export interface components {
              * Format: date-time
              */
             updated_at: string;
+        };
+        /**
+         * PerfMetricRow
+         * @description 性能压测核心指标。
+         */
+        PerfMetricRow: {
+            /** Task Id */
+            task_id: number;
+            /** Task Name */
+            task_name: string;
+            /** Model Name */
+            model_name: string;
+            /** Total Requests */
+            total_requests: number;
+            /** Succeed Requests */
+            succeed_requests: number;
+            /** Failed Requests */
+            failed_requests: number;
+            /** Success Rate */
+            success_rate?: number | null;
+            /** Request Throughput */
+            request_throughput?: number | null;
+            /** Total Token Throughput */
+            total_token_throughput?: number | null;
+            /** Avg Latency */
+            avg_latency?: number | null;
+            /** Avg Ttft */
+            avg_ttft?: number | null;
+            /** Avg Tpot */
+            avg_tpot?: number | null;
+            /** Metrics */
+            metrics?: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * PerfPercentileRow
+         * @description 性能压测 percentile 行。
+         */
+        PerfPercentileRow: {
+            /** Task Id */
+            task_id: number;
+            /** Task Name */
+            task_name: string;
+            /** Model Name */
+            model_name: string;
+            /** Percentile */
+            percentile: string;
+            /** Latency */
+            latency?: number | null;
+            /** Ttft */
+            ttft?: number | null;
+            /** Tpot */
+            tpot?: number | null;
+            /** Output Throughput */
+            output_throughput?: number | null;
+            /** Total Throughput */
+            total_throughput?: number | null;
+        };
+        /**
+         * PerfResultRead
+         * @description 性能压测结果摘要。
+         */
+        PerfResultRead: {
+            /** Id */
+            id: number;
+            /** Task Id */
+            task_id: number;
+            /** Total Requests */
+            total_requests: number;
+            /** Succeed Requests */
+            succeed_requests: number;
+            /** Failed Requests */
+            failed_requests: number;
+            /** Request Throughput */
+            request_throughput: number | null;
+            /** Output Token Throughput */
+            output_token_throughput: number | null;
+            /** Total Token Throughput */
+            total_token_throughput: number | null;
+            /** Avg Latency */
+            avg_latency: number | null;
+            /** Avg Ttft */
+            avg_ttft: number | null;
+            /** Avg Tpot */
+            avg_tpot: number | null;
+            /** Success Rate */
+            success_rate: number | null;
+            /** Metrics */
+            metrics: {
+                [key: string]: unknown;
+            };
+            /** Percentiles */
+            percentiles: {
+                [key: string]: unknown;
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /**
+         * PerfTaskCreate
+         * @description 创建性能压测任务的请求体。
+         */
+        PerfTaskCreate: {
+            /**
+             * Name
+             * @description 任务名称
+             */
+            name: string;
+            /**
+             * Model Pk
+             * @description 模型主键 id
+             */
+            model_pk: number;
+            /**
+             * Request Count
+             * @description 请求总数
+             * @default 100
+             */
+            request_count: number;
+            /**
+             * Concurrency
+             * @description 并发数
+             * @default 1
+             */
+            concurrency: number;
+            /**
+             * Rate
+             * @description -1 表示 closed-loop 不限速
+             * @default -1
+             */
+            rate: number;
+            /**
+             * Perf Dataset
+             * @description 压测数据源
+             * @default prompt
+             * @enum {string}
+             */
+            perf_dataset: "prompt" | "openqa" | "custom";
+            /**
+             * Custom Dataset Id
+             * @description 自定义数据集 id
+             */
+            custom_dataset_id?: number | null;
+            /**
+             * Prompt
+             * @default 你好，请用一句话介绍自己。
+             */
+            prompt: string;
+            /**
+             * Max Tokens
+             * @default 1024
+             */
+            max_tokens: number;
+            /**
+             * Temperature
+             * @default 0
+             */
+            temperature: number;
+            /**
+             * Stream
+             * @default true
+             */
+            stream: boolean;
+            /** Connect Timeout */
+            connect_timeout?: number | null;
+            /** Read Timeout */
+            read_timeout?: number | null;
+            /**
+             * Total Timeout
+             * @default 21600
+             */
+            total_timeout: number | null;
+            /** Description */
+            description?: string | null;
+            /** Tags */
+            tags?: string[];
+        };
+        /**
+         * PerfTaskRead
+         * @description 性能压测任务响应。
+         */
+        PerfTaskRead: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /** Model Pk */
+            model_pk: number;
+            /** Model Name */
+            model_name: string;
+            /** Model Id */
+            model_id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "running" | "succeeded" | "failed";
+            /** Request Count */
+            request_count: number;
+            /** Concurrency */
+            concurrency: number;
+            /** Rate */
+            rate: number;
+            /** Perf Dataset */
+            perf_dataset: string;
+            /** Custom Dataset Id */
+            custom_dataset_id: number | null;
+            /** Dataset Path */
+            dataset_path: string | null;
+            /** Prompt */
+            prompt: string;
+            /** Max Tokens */
+            max_tokens: number;
+            /** Temperature */
+            temperature: number;
+            /** Stream */
+            stream: boolean;
+            /** Connect Timeout */
+            connect_timeout: number | null;
+            /** Read Timeout */
+            read_timeout: number | null;
+            /** Total Timeout */
+            total_timeout: number | null;
+            /** Work Dir */
+            work_dir: string | null;
+            /** Log Path */
+            log_path: string | null;
+            /** Result Summary */
+            result_summary: {
+                [key: string]: unknown;
+            } | null;
+            /** Percentile Summary */
+            percentile_summary: {
+                [key: string]: unknown;
+            } | null;
+            /** Error Message */
+            error_message: string | null;
+            /** Description */
+            description: string | null;
+            /** Tags */
+            tags: string[];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Started At */
+            started_at: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            result?: components["schemas"]["PerfResultRead"] | null;
+        };
+        /**
+         * ReportCompareRequest
+         * @description 报告对比请求。
+         */
+        ReportCompareRequest: {
+            /**
+             * Task Type
+             * @description 报告类型：质量评测或性能压测
+             * @enum {string}
+             */
+            task_type: "eval" | "perf";
+            /**
+             * Task Ids
+             * @description 选择的任务 id，最多 8 个
+             */
+            task_ids?: number[];
+        };
+        /**
+         * ReportCompareResponse
+         * @description 报告对比响应。
+         */
+        ReportCompareResponse: {
+            /**
+             * Task Type
+             * @enum {string}
+             */
+            task_type: "eval" | "perf";
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /** Tasks */
+            tasks: components["schemas"]["ReportTaskSummary"][];
+            /** Eval Dataset Scores */
+            eval_dataset_scores?: components["schemas"]["EvalDatasetScore"][];
+            /** Eval Matrix */
+            eval_matrix?: components["schemas"]["EvalScoreMatrixRow"][];
+            /** Perf Metrics */
+            perf_metrics?: components["schemas"]["PerfMetricRow"][];
+            /** Perf Percentiles */
+            perf_percentiles?: components["schemas"]["PerfPercentileRow"][];
+            /** Trends */
+            trends?: components["schemas"]["ReportTrendPoint"][];
+        };
+        /**
+         * ReportExportRequest
+         * @description 报告导出请求。
+         */
+        ReportExportRequest: {
+            /**
+             * Task Type
+             * @description 报告类型：质量评测或性能压测
+             * @enum {string}
+             */
+            task_type: "eval" | "perf";
+            /**
+             * Task Ids
+             * @description 选择的任务 id，最多 8 个
+             */
+            task_ids?: number[];
+            /**
+             * Format
+             * @default markdown
+             * @enum {string}
+             */
+            format: "markdown" | "html";
+        };
+        /**
+         * ReportExportResponse
+         * @description 报告导出响应。
+         */
+        ReportExportResponse: {
+            /**
+             * Format
+             * @enum {string}
+             */
+            format: "markdown" | "html";
+            /** File Path */
+            file_path: string;
+            /** Content */
+            content: string;
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+        };
+        /**
+         * ReportTaskListResponse
+         * @description 报告任务候选列表响应。
+         */
+        ReportTaskListResponse: {
+            /**
+             * Task Type
+             * @enum {string}
+             */
+            task_type: "eval" | "perf";
+            /** Tasks */
+            tasks: components["schemas"]["ReportTaskOption"][];
+        };
+        /**
+         * ReportTaskOption
+         * @description 报告页左侧可选择任务。
+         */
+        ReportTaskOption: {
+            /**
+             * Task Type
+             * @enum {string}
+             */
+            task_type: "eval" | "perf";
+            /** Task Id */
+            task_id: number;
+            /** Task Name */
+            task_name: string;
+            /** Model Name */
+            model_name: string;
+            /** Model Id */
+            model_id: string;
+            /** Status */
+            status: string;
+            /** Primary Metric */
+            primary_metric?: number | null;
+            /** Primary Metric Name */
+            primary_metric_name?: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Finished At */
+            finished_at?: string | null;
+        };
+        /**
+         * ReportTaskSummary
+         * @description 选中任务摘要。
+         */
+        ReportTaskSummary: {
+            /**
+             * Task Type
+             * @enum {string}
+             */
+            task_type: "eval" | "perf";
+            /** Task Id */
+            task_id: number;
+            /** Task Name */
+            task_name: string;
+            /** Model Name */
+            model_name: string;
+            /** Model Id */
+            model_id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Finished At */
+            finished_at?: string | null;
+            /** Primary Metric */
+            primary_metric?: number | null;
+            /** Primary Metric Name */
+            primary_metric_name?: string | null;
+        };
+        /**
+         * ReportTrendPoint
+         * @description 趋势图数据点。
+         */
+        ReportTrendPoint: {
+            /**
+             * Task Type
+             * @enum {string}
+             */
+            task_type: "eval" | "perf";
+            /** Task Id */
+            task_id: number;
+            /** Model Name */
+            model_name: string;
+            /** Metric Name */
+            metric_name: string;
+            /** Metric Value */
+            metric_value: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
         };
         /** ValidationError */
         ValidationError: {
@@ -387,6 +1325,441 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConnectivityTestResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_benchmarks_endpoint_api_benchmarks_get: {
+        parameters: {
+            query?: {
+                /** @description 按名称/展示名/说明模糊搜索 */
+                keyword?: string | null;
+                /** @description 按标签精确过滤 */
+                tag?: string | null;
+                /** @description 按评测后端精确过滤 */
+                backend?: string | null;
+                /** @description 按评测类型过滤，如 quality/perf */
+                eval_type?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BenchmarkInfo"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_datasets_endpoint_api_datasets_get: {
+        parameters: {
+            query?: {
+                /** @description 按数据集类型过滤 */
+                dataset_type?: string | null;
+                /** @description 按标签过滤 */
+                tag?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomDatasetRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_dataset_endpoint_api_datasets_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_create_dataset_endpoint_api_datasets_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomDatasetRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_dataset_endpoint_api_datasets__dataset_pk__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 数据集主键 id */
+                dataset_pk: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_eval_tasks_endpoint_api_eval_tasks_get: {
+        parameters: {
+            query?: {
+                /** @description 按任务状态过滤 */
+                status?: string | null;
+                /** @description 按模型 id 过滤 */
+                model_pk?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvalTaskRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_eval_task_endpoint_api_eval_tasks_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EvalTaskCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvalTaskRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_eval_task_endpoint_api_eval_tasks__task_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 评测任务 id */
+                task_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvalTaskRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_perf_tasks_endpoint_api_perf_tasks_get: {
+        parameters: {
+            query?: {
+                /** @description 按任务状态过滤 */
+                status?: string | null;
+                /** @description 按模型 id 过滤 */
+                model_pk?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PerfTaskRead"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_perf_task_endpoint_api_perf_tasks_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PerfTaskCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PerfTaskRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_perf_task_endpoint_api_perf_tasks__task_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 性能压测任务 id */
+                task_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PerfTaskRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_report_tasks_endpoint_api_reports_tasks_get: {
+        parameters: {
+            query: {
+                /** @description 任务类型 */
+                task_type: "eval" | "perf";
+                /** @description 按任务名或模型搜索 */
+                keyword?: string | null;
+                /** @description 返回数量 */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportTaskListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    compare_reports_endpoint_api_reports_compare_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportCompareRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportCompareResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_report_endpoint_api_reports_export_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportExportRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportExportResponse"];
                 };
             };
             /** @description Validation Error */

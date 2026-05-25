@@ -2,6 +2,8 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
 
+const backendTarget = process.env.EVAL_PLATFORM_BACKEND_URL ?? 'http://localhost:8001';
+
 // Vite 配置 — 开发期 /api 代理到后端，避免 CORS 在生产时也手工配置
 export default defineConfig({
   plugins: [react()],
@@ -15,7 +17,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: backendTarget,
         changeOrigin: true,
       },
     },

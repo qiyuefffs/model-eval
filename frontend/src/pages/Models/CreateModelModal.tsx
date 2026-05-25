@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
   Alert,
+  AutoComplete,
   Button,
   Form,
   Input,
@@ -19,6 +20,7 @@ import { LinkOutlined, KeyOutlined, RocketOutlined } from '@ant-design/icons';
 import { useCreateModel, type ModelCreate } from '@/api/hooks/useModels';
 
 const { Text } = Typography;
+const DEFAULT_API_KEY = 'Bearer-local-dev-key';
 
 const schema = z.object({
   name: z
@@ -35,7 +37,7 @@ const schema = z.object({
     .string()
     .trim()
     .url('请输入合法的 URL（例如 https://api.deepseek.com/v1/chat/completions）'),
-  api_key: z.string().trim().min(1, '请输入 API Key'),
+  api_key: z.string().trim().default(''),
   description: z.string().max(2000).optional().default(''),
   tags: z.array(z.string()).max(20, '标签最多 20 个').default([]),
 });
@@ -101,7 +103,10 @@ export default function CreateModelModal({ open, onClose }: Props) {
   const onSubmit = async (values: FormValues) => {
     setSubmitting(true);
     try {
-      await create.mutateAsync(values as ModelCreate);
+      await create.mutateAsync({
+        ...values,
+        api_key: values.api_key || DEFAULT_API_KEY,
+      } as ModelCreate);
       message.success(`模型 "${values.name}" 注册成功`);
       reset();
       onClose();
@@ -227,20 +232,41 @@ export default function CreateModelModal({ open, onClose }: Props) {
 
         <Form.Item
           label="API Key"
-          required
           validateStatus={errors.api_key ? 'error' : ''}
-          help={errors.api_key?.message ?? '加密后存储，仅在评测时解密用于实际请求'}
+          help={errors.api_key?.message ?? `可留空；留空注册时默认使用 ${DEFAULT_API_KEY}`}
         >
           <Controller
             name="api_key"
             control={control}
             render={({ field }) => (
-              <Input.Password
-                {...field}
-                prefix={<KeyOutlined style={{ color: 'var(--text-muted)' }} />}
-                placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                style={{ fontFamily: 'var(--font-mono)' }}
-              />
+              <AutoComplete
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                options={[
+                  {
+                    value: DEFAULT_API_KEY,
+                    label: (
+                      <Space>
+                        <KeyOutlined />
+                        <span>{DEFAULT_API_KEY}</span>
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                          本地/免鉴权默认值
+                        </Text>
+                      </Space>
+                    ),
+                  },
+                ]}
+                placeholder={DEFAULT_API_KEY}
+                filterOption={(inputValue, option) =>
+                  String(option?.value ?? '').toLowerCase().includes(inputValue.toLowerCase())
+                }
+              >
+                <Input.Password
+                  prefix={<KeyOutlined style={{ color: 'var(--text-muted)' }} />}
+                  style={{ fontFamily: 'var(--font-mono)' }}
+                />
+              </AutoComplete>
             )}
           />
         </Form.Item>

@@ -7,11 +7,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import ORJSONResponse
 from loguru import logger
 
+from api.benchmarks import router as benchmarks_router
+from api.datasets import router as datasets_router
+from api.eval_tasks import router as eval_tasks_router
 from api.health import router as health_router
 from api.models import router as models_router
+from api.perf_tasks import router as perf_tasks_router
+from api.reports import router as reports_router
 from core.config import get_settings
 from core.logger import setup_logging
 from db.database import init_db
+from workers.eval_worker import start_eval_worker, stop_eval_worker
+from workers.perf_worker import start_perf_worker, stop_perf_worker
 
 
 @asynccontextmanager
@@ -26,10 +33,13 @@ async def lifespan(app: FastAPI):
 
     await init_db()
 
-    # TODO 阶段 6：启动 eval/perf worker
+    await start_eval_worker()
+    await start_perf_worker()
 
     yield
 
+    await stop_perf_worker()
+    await stop_eval_worker()
     logger.info(f"关闭 {settings.app_name}")
 
 
@@ -55,6 +65,11 @@ def create_app() -> FastAPI:
 
     app.include_router(health_router)
     app.include_router(models_router)
+    app.include_router(benchmarks_router)
+    app.include_router(datasets_router)
+    app.include_router(eval_tasks_router)
+    app.include_router(perf_tasks_router)
+    app.include_router(reports_router)
 
     @app.get("/", tags=["root"], summary="根路径")
     async def root() -> dict:

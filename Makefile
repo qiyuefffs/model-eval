@@ -1,4 +1,4 @@
-.PHONY: help install install-backend install-frontend dev dev-backend dev-frontend gen-api clean test lint format
+.PHONY: help install install-backend install-frontend dev dev-backend dev-frontend docker-build docker-up docker-down docker-package gen-api clean test lint format
 
 # 默认目标：打印帮助
 help:
@@ -8,9 +8,12 @@ help:
 	@echo "  make install-backend  仅安装后端 Python 依赖（uv）"
 	@echo "  make install-frontend 仅安装前端依赖（pnpm）"
 	@echo ""
-	@echo "  make dev              并行启动前后端（推荐开发用）"
-	@echo "  make dev-backend      仅启动后端 uvicorn http://localhost:8000"
+	@echo "  make dev              一键启动前后端（推荐开发用）"
+	@echo "  make dev-backend      仅启动后端 uvicorn http://localhost:8001"
 	@echo "  make dev-frontend     仅启动前端 Vite     http://localhost:5173"
+	@echo "  make docker-up        Docker Compose 一键启动 http://localhost:8080"
+	@echo "  make docker-down      停止 Docker Compose 服务"
+	@echo "  make docker-package   构建并导出 Docker 离线镜像包"
 	@echo ""
 	@echo "  make gen-api          后端 OpenAPI -> 前端 TS 类型"
 	@echo "  make lint             代码风格检查（ruff + eslint）"
@@ -27,17 +30,25 @@ install-frontend:
 	cd frontend && pnpm install
 
 dev:
-	@echo "并行启动前后端，Ctrl+C 一起退出"
-	@trap 'kill 0' INT; \
-		(cd backend && uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000) & \
-		(cd frontend && pnpm dev) & \
-		wait
+	bash scripts/start-dev.sh
 
 dev-backend:
-	cd backend && uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000
+	cd backend && uv run uvicorn main:app --reload --host 127.0.0.1 --port 8001
 
 dev-frontend:
 	cd frontend && pnpm dev
+
+docker-build:
+	docker compose build
+
+docker-up:
+	docker compose up -d --build
+
+docker-down:
+	docker compose down
+
+docker-package:
+	bash scripts/package-docker.sh
 
 gen-api:
 	@echo "确保后端已启动，正在拉取 OpenAPI schema..."

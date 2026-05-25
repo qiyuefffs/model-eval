@@ -4,6 +4,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from loguru import logger
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlmodel import SQLModel
 
@@ -36,7 +37,24 @@ async def init_db() -> None:
 
     async with async_engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
+        if "sqlite" in _settings.database_url:
+            await _ensure_sqlite_dev_columns(conn)
     logger.info(f"数据库初始化完成：{_settings.database_url}")
+
+
+async def _ensure_sqlite_dev_columns(conn) -> None:
+    """开发期轻量补列，避免 create_all 不修改既有 SQLite 表结构。"""
+    result = await conn.execute(text("PRAGMA table_info(perf_tasks)"))
+    columns = {row[1] for row in result.fetchall()}
+    migrations = {
+        "perf_dataset": "ALTER TABLE perf_tasks ADD COLUMN perf_dataset VARCHAR(60) NOT NULL DEFAULT 'prompt'",
+        "custom_dataset_id": "ALTER TABLE perf_tasks ADD COLUMN custom_dataset_id INTEGER",
+        "dataset_path": "ALTER TABLE perf_tasks ADD COLUMN dataset_path VARCHAR(1000)",
+    }
+    for column, ddl in migrations.items():
+        if column not in columns:
+            await conn.execute(text(ddl))
+            logger.info(f"SQLite 开发库补列完成：perf_tasks.{column}")
 
 
 @asynccontextmanager
