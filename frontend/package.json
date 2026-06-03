@@ -1,9 +1,9 @@
 {
-  "name": "eval-platform-frontend",
+  "name": "modelgauge-frontend",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "EvalPlatform 前端 — React + Vite + AntD + Tailwind",
+  "description": "ModelGauge 前端 — React + Vite + AntD + Tailwind",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

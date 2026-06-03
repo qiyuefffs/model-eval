@@ -1,4 +1,4 @@
-# EvalPlatform 前端
+# ModelGauge 前端
 
 基于 Vite + React 18 + TypeScript + Ant Design 5 + Tailwind CSS 的模型评估平台前端。
 
@@ -49,10 +49,10 @@ pnpm gen:api  # 拉取 OpenAPI schema 生成 TS 类型
 
 ## 视觉规范
 
-**暗色终端美学**：
+**深蓝数据控制台风格**：
 
-- 主背景：`#0a0e14`（深炭黑 + 32px subtle 网格）
-- 强调色：终端绿 `#50c878` / 橙 `#ffb454` / 红 `#ff5370`
-- 字体：Manrope（正文）+ JetBrains Mono（代码 / 指标）
+- 主背景：`#080d1a`（深海军蓝 + 光晕细网格）
+- 强调色：靛蓝 `#7c8cff` / 青色 `#49c6e5` / 金色 `#f6b94b`
+- 字体：Inter（正文）+ IBM Plex Mono（代码 / 指标）
 
 CSS 变量见 `src/theme/tokens.css`，AntD 主题见 `src/theme/antd-theme.ts`。

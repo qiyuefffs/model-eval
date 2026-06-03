@@ -9,16 +9,17 @@ BACKEND_PORT="${BACKEND_PORT:-8001}"
 FRONTEND_PORT="${FRONTEND_PORT:-5173}"
 AUTO_KILL_OLD="${AUTO_KILL_OLD:-1}"
 MAX_PORT_OFFSET="${MAX_PORT_OFFSET:-20}"
+DEV_WATCH_POLLING="${DEV_WATCH_POLLING:-1}"
 
 BACKEND_PID=""
 FRONTEND_PID=""
 
 log() {
-  printf '[EvalPlatform] %s\n' "$1" >&2
+  printf '[ModelGauge] %s\n' "$1" >&2
 }
 
 die() {
-  printf '[EvalPlatform] 启动失败：%s\n' "$1" >&2
+  printf '[ModelGauge] 启动失败：%s\n' "$1" >&2
   exit 1
 }
 
@@ -84,7 +85,7 @@ is_old_frontend() {
   cwd="$(pid_cwd "$pid")"
   [[ "$cwd" == "$FRONTEND_DIR" && "$cmd" == *"vite"* ]] \
     || [[ "$cmd" == *"$FRONTEND_DIR"* && "$cmd" == *"vite"* ]] \
-    || [[ "$cmd" == *"eval-platform-frontend"* && "$cmd" == *"vite"* ]]
+    || [[ "$cmd" == *"modelgauge-frontend"* && "$cmd" == *"vite"* ]]
 }
 
 kill_process_tree() {
@@ -213,6 +214,9 @@ FRONTEND_PORT="$(resolve_port "前端" "$FRONTEND_PORT" is_old_frontend)"
 log "启动后端：http://$BACKEND_HOST:$BACKEND_PORT"
 (
   cd "$BACKEND_DIR"
+  if [[ "$DEV_WATCH_POLLING" == "1" ]]; then
+    export WATCHFILES_FORCE_POLLING=true
+  fi
   uv run uvicorn main:app --reload --host "$BACKEND_HOST" --port "$BACKEND_PORT"
 ) &
 BACKEND_PID="$!"
@@ -222,7 +226,10 @@ wait_for_http "http://$BACKEND_HOST:$BACKEND_PORT/api/health" "后端"
 log "启动前端：http://localhost:$FRONTEND_PORT"
 (
   cd "$FRONTEND_DIR"
-  EVAL_PLATFORM_BACKEND_URL="http://$BACKEND_HOST:$BACKEND_PORT" pnpm dev --host 0.0.0.0 --port "$FRONTEND_PORT"
+  if [[ "$DEV_WATCH_POLLING" == "1" ]]; then
+    export CHOKIDAR_USEPOLLING=true
+  fi
+  MODELGAUGE_BACKEND_URL="http://$BACKEND_HOST:$BACKEND_PORT" pnpm dev --host 0.0.0.0 --port "$FRONTEND_PORT"
 ) &
 FRONTEND_PID="$!"
 
@@ -230,7 +237,7 @@ wait_for_http "http://127.0.0.1:$FRONTEND_PORT/" "前端"
 
 cat <<EOF
 
-EvalPlatform 已启动
+ModelGauge 已启动
 - 前端地址：http://localhost:$FRONTEND_PORT
 - 后端地址：http://$BACKEND_HOST:$BACKEND_PORT
 - API 文档：http://$BACKEND_HOST:$BACKEND_PORT/docs

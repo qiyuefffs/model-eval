@@ -1,8 +1,8 @@
-.PHONY: help install install-backend install-frontend dev dev-backend dev-frontend docker-build docker-up docker-down docker-package gen-api clean test lint format
+.PHONY: help install install-backend install-frontend dev dev-backend dev-frontend docker-secret docker-build docker-up docker-down docker-package gen-api clean test lint format
 
 # 默认目标：打印帮助
 help:
-	@echo "EvalPlatform Makefile 速查表"
+	@echo "ModelGauge Makefile 速查表"
 	@echo ""
 	@echo "  make install          一键安装前后端依赖"
 	@echo "  make install-backend  仅安装后端 Python 依赖（uv）"
@@ -33,15 +33,21 @@ dev:
 	bash scripts/start-dev.sh
 
 dev-backend:
-	cd backend && uv run uvicorn main:app --reload --host 127.0.0.1 --port 8001
+	cd backend && WATCHFILES_FORCE_POLLING=true uv run uvicorn main:app --reload --host 127.0.0.1 --port 8001
 
 dev-frontend:
-	cd frontend && pnpm dev
+	cd frontend && CHOKIDAR_USEPOLLING=true pnpm dev
+
+docker-secret:
+	@if [ ! -f .env ]; then \
+		printf 'SECRET_KEY=%s\n' "$$(openssl rand -hex 32 2>/dev/null || python3 -c 'import secrets;print(secrets.token_hex(32))')" > .env; \
+		echo "[ModelGauge] 已生成根目录 .env（含随机 SECRET_KEY），供 docker compose 使用。"; \
+	fi
 
 docker-build:
 	docker compose build
 
-docker-up:
+docker-up: docker-secret
 	docker compose up -d --build
 
 docker-down:

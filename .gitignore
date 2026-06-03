@@ -57,6 +57,11 @@ release.zip
 *.swp
 .DS_Store
 
+# 本地开发记录 / 内部交接材料
+.claude/
+docs/HANDOVER.md
+docs/PROJECT_OUTPUT_REPORT.md
+
 # 评测缓存
 .cache/
 ~/.cache/

@@ -1,4 +1,4 @@
-# EvalPlatform Docker 打包操作记录
+# ModelGauge Docker 打包操作记录
 
 > 记录时间：2026-05-22  
 > 打包方式：Docker Compose + 离线镜像包  
@@ -30,14 +30,14 @@
 
 - `docker-compose.yml`
   - `backend` 服务：
-    - 镜像名：`eval-platform-backend:latest`
+    - 镜像名：`modelgauge-backend:latest`
     - 宿主机默认端口：`8001`
     - 容器端口：`8001`
     - 持久化目录：`./data:/data`
     - 数据库：`sqlite+aiosqlite:////data/platform.db`
     - 健康检查：`/api/health`
   - `frontend` 服务：
-    - 镜像名：`eval-platform-frontend:latest`
+    - 镜像名：`modelgauge-frontend:latest`
     - 宿主机默认端口：`8080`
     - 容器端口：`80`
     - 等待后端健康后启动。
@@ -46,7 +46,7 @@
 
 - `scripts/package-docker.sh`
   - 执行 `docker compose build`
-  - 执行 `docker save eval-platform-backend:latest eval-platform-frontend:latest | gzip`
+  - 执行 `docker save modelgauge-backend:latest modelgauge-frontend:latest | gzip`
   - 输出离线镜像包到 `release/`
   - 复制 `docker-compose.yml`、`.env.example`、`README-docker.md`、`docker_manger.sh` 到 `release/`
 
@@ -82,7 +82,7 @@ bash scripts/package-docker.sh
 
 ```bash
 docker compose build
-docker save eval-platform-backend:latest eval-platform-frontend:latest | gzip > release/eval-platform-docker-<版本>.tar.gz
+docker save modelgauge-backend:latest modelgauge-frontend:latest | gzip > release/modelgauge-docker-<版本>.tar.gz
 cp docker-compose.yml release/docker-compose.yml
 cp .env.docker.example release/.env.example
 ```
@@ -94,13 +94,13 @@ cp .env.docker.example release/.env.example
 终端输出显示：
 
 ```text
-[EvalPlatform] 构建 Docker 镜像...
+[ModelGauge] 构建 Docker 镜像...
 [+] build 2/2
-✔ Image eval-platform-frontend:latest Built
-✔ Image eval-platform-backend:latest  Built
-[EvalPlatform] 导出镜像包：/home/hywl/xiangmu/vllm-skills-agent/eval-platform/release/eval-platform-docker-20260522101004.tar.gz
-[EvalPlatform] 复制部署文件...
-[EvalPlatform] 打包完成：/home/hywl/xiangmu/vllm-skills-agent/eval-platform/release
+✔ Image modelgauge-frontend:latest Built
+✔ Image modelgauge-backend:latest  Built
+[ModelGauge] 导出镜像包：/path/to/modelgauge/release/modelgauge-docker-20260522101004.tar.gz
+[ModelGauge] 复制部署文件...
+[ModelGauge] 打包完成：/path/to/modelgauge/release
 ```
 
 本次生成文件：
@@ -108,21 +108,21 @@ cp .env.docker.example release/.env.example
 ```text
 release/
 ├── docker-compose.yml
-├── eval-platform-docker-20260522101004.tar.gz
+├── modelgauge-docker-20260522101004.tar.gz
 └── README-docker.md
 ```
 
 文件大小：
 
 ```text
-eval-platform-docker-20260522101004.tar.gz    490M
+modelgauge-docker-20260522101004.tar.gz    490M
 ```
 
 镜像大小：
 
 ```text
-eval-platform-backend:latest     1.44GB
-eval-platform-frontend:latest    63.9MB
+modelgauge-backend:latest     1.44GB
+modelgauge-frontend:latest    63.9MB
 ```
 
 ---
@@ -150,8 +150,8 @@ docker compose build
 结果：
 
 ```text
-Image eval-platform-backend:latest Built
-Image eval-platform-frontend:latest Built
+Image modelgauge-backend:latest Built
+Image modelgauge-frontend:latest Built
 ```
 
 ### 临时端口冒烟测试
@@ -189,7 +189,7 @@ FRONTEND_PORT=18080 BACKEND_PORT=18001 docker compose down
 将 `release/` 目录中的文件复制到目标机器同一目录下：
 
 ```text
-eval-platform-docker-20260522101004.tar.gz
+modelgauge-docker-20260522101004.tar.gz
 docker-compose.yml
 docker_manger.sh
 README-docker.md
@@ -199,7 +199,7 @@ README-docker.md
 目标机器执行：
 
 ```bash
-docker load -i eval-platform-docker-20260522101004.tar.gz
+docker load -i modelgauge-docker-20260522101004.tar.gz
 cp .env.example .env
 ./docker_manger.sh start
 ```
@@ -287,3 +287,31 @@ RUN corepack enable && corepack prepare pnpm@9.15.9 --activate
 ```
 
 固定 pnpm 版本后，Docker 镜像构建成功。
+
+---
+
+## 更新记录（2026-06）
+
+本轮迭代涉及 Docker 部署逻辑的关键调整，已同步更新打包与部署脚本：
+
+### 1. SECRET_KEY 生产环境强制校验（重要）
+
+后端新增校验：当 `DEBUG=false`（生产）且 `SECRET_KEY` 为空或仍是公开默认值时，**启动直接报错**，避免模型 API Key 用公开密钥加密等同明文。
+
+由于 `docker-compose.yml` 固定 `DEBUG: "false"`，所有 Docker 启动路径都必须提供自定义 `SECRET_KEY`，否则后端容器会启动失败。对应改动：
+
+- `scripts/docker_manger.sh`：`ensure_env` 首次从 `.env.example` 生成 `.env` 时，自动用
+  `openssl rand -hex 32`（或 `python3 secrets` / `/dev/urandom` 兜底）生成随机 `SECRET_KEY` 写入 `.env`。
+- `Makefile`：新增 `docker-secret` 目标，`make docker-up` 前自动在根目录生成含随机 `SECRET_KEY` 的 `.env`（`.env` 已被 gitignore）。
+- `.env.docker.example`：`SECRET_KEY` 改为留空占位 + 说明（首次启动自动生成；手动部署用 `openssl rand -hex 32`）。
+- `scripts/package-docker.sh`：生成的 `README-docker.md` 去掉手动 `cp .env.example .env` 步骤（改由 `docker_manger.sh` 自动生成并注入密钥），并增加“请勿更换/删除 SECRET_KEY”的提示。
+
+> ⚠️ 迁移/备份时务必连同 `.env`（含 SECRET_KEY）与 `data/` 一起保留，否则已加密的 API Key 无法解密。
+
+### 2. 后端默认端口对齐为 8001
+
+`backend/core/config.py` 默认 `port` 与 `backend/.env.example` 的 `PORT` 由 `8000` 改为 `8001`，与 `docker-compose.yml`、`docker/nginx.conf`、`scripts/start-dev.sh` 全栈一致；Docker 内仍通过环境变量显式指定 `PORT=8001`，行为不变。
+
+### 3. 不影响镜像构建方式的应用层改动
+
+以下改动包含在镜像内但不改变构建/部署流程：前端 6 个页面统一为企业级暗色范式（PageHeader / MetricCard / 右侧 Drawer 表单 / 统一状态徽标 / ECharts 趋势图）、全局主题低对比化；后端性能压测新增精简指标矩阵导出（Markdown/HTML）与中文 CSV、worker 容错、列表接口 N+1 优化等。

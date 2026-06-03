@@ -1,6 +1,6 @@
-# EvalPlatform 项目长期记忆
+# ModelGauge 项目长期记忆
 
-> 这是 EvalPlatform 项目的"长期记忆"文件。每次发生**重大决策变更**或**踩坑解决**后必须更新。
+> 这是 ModelGauge 项目的"长期记忆"文件。每次发生**重大决策变更**或**踩坑解决**后必须更新。
 
 ---
 
@@ -49,16 +49,16 @@
 | 动画 | Framer Motion | 微交互 |
 | HTTP | Axios + openapi-typescript | 后端 OpenAPI 自动生成 TS 类型 |
 | 实时日志 | SSE (EventSource) | FastAPI StreamingResponse |
-| 字体 | Manrope（正文）+ JetBrains Mono（代码） | 避免 Inter 通用感 |
+| 字体 | Inter（正文）+ IBM Plex Mono（代码） | 清晰、克制、适合数据控制台 |
 
 ### 视觉风格
 
-**暗色终端美学**（工程师友好）：
+**深蓝数据控制台**（工程师友好）：
 
-- 主背景：深炭黑 `#0a0e14`
-- 强调色：终端绿 `#50c878`（通过/主操作）、橙 `#ffb454`（运行中）、红 `#ff5370`（失败）
-- 字体：Manrope + JetBrains Mono
-- 背景：subtle 32px 网格
+- 主背景：深海军蓝 `#080d1a`
+- 强调色：靛蓝 `#7c8cff`（主操作）、青色 `#49c6e5`（信息）、金色 `#f6b94b`（运行中）
+- 字体：Inter + IBM Plex Mono
+- 背景：柔和光晕 + 40px 细网格
 - 动画：Framer Motion 微交互，避免过度炫技
 
 ---
@@ -66,7 +66,7 @@
 ## 3. 目录约定
 
 ```
-eval-platform/
+modelgauge/
 ├── backend/         Python 后端（FastAPI）
 ├── frontend/        React 前端（Vite）
 ├── configs/         模型/基准/压测的 YAML 预设
@@ -214,7 +214,7 @@ eval-platform/
 
 - 一键启动使用 `./scripts/start-dev.sh` 或 `make dev`，统一启动后端 `127.0.0.1:8001` 和前端 `localhost:5173`。
 - 启动脚本会检查端口占用、等待 `/api/health` 和 Vite 首页就绪，并在 `Ctrl+C` 时同时停止前后端子进程。
-- 前端 Vite 代理默认指向后端 `8001`，但启动脚本如果因端口占用把后端切换到 `8002+`，必须通过 `EVAL_PLATFORM_BACKEND_URL` 同步传给 Vite，否则页面能打开但 `/api` 会连错后端端口。
+- 前端 Vite 代理默认指向后端 `8001`，但启动脚本如果因端口占用把后端切换到 `8002+`，必须通过 `MODELGAUGE_BACKEND_URL` 同步传给 Vite，否则页面能打开但 `/api` 会连错后端端口。
 - `pnpm gen:api` 固定使用 `localhost:8001`，如后端临时换端口，需要手动指定或先释放 `8001`。
 
 ### Docker 打包部署
@@ -222,7 +222,7 @@ eval-platform/
 - Docker 方案包含 `Dockerfile.backend`、`Dockerfile.frontend`、`docker-compose.yml` 和 `docker/nginx.conf`。
 - 前端容器使用 Nginx 提供静态资源，并将 `/api`、`/docs`、`/openapi.json`、`/redoc` 反代到后端容器。
 - 后端容器使用 `/data` 持久化 SQLite、`outputs`、`reports` 和 `custom_datasets`，Compose 默认映射到项目根目录 `data/`。
-- `scripts/package-docker.sh` 会构建镜像并导出 `release/eval-platform-docker-<版本>.tar.gz`，同时复制 Compose 和部署说明。
+- `scripts/package-docker.sh` 会构建镜像并导出 `release/modelgauge-docker-<版本>.tar.gz`，同时复制 Compose 和部署说明。
 - `release/docker_manger.sh` 提供部署包一键管理：`start` 首次创建容器并打开前端界面，后续直接启动已有容器；`stop` 仅停止容器，不删除容器，提升二次启动速度。
 - Docker Compose 已用临时端口完成冒烟测试：后端 `/api/health`、前端首页、Nginx `/api/health` 反代均通过。
 

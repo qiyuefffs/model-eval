@@ -1,11 +1,11 @@
 services:
   backend:
-    image: eval-platform-backend:latest
+    image: modelgauge-backend:latest
     build:
       context: .
       dockerfile: Dockerfile.backend
     environment:
-      APP_NAME: EvalPlatform
+      APP_NAME: ModelGauge
       APP_VERSION: 0.1.0
       DEBUG: "false"
       HOST: 0.0.0.0
@@ -28,7 +28,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    image: eval-platform-frontend:latest
+    image: modelgauge-frontend:latest
     build:
       context: .
       dockerfile: Dockerfile.frontend

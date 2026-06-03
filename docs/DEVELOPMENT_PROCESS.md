@@ -1,10 +1,10 @@
-# EvalPlatform 开发流程文档
+# ModelGauge 开发流程文档
 
-> 本文档记录 EvalPlatform 从需求、架构、阶段拆分到日常开发验证的完整流程。长期技术记忆和踩坑记录见 `.claude/PROJECT.md`。
+> 本文档记录 ModelGauge 从需求、架构、阶段拆分到日常开发验证的完整流程。
 
 ## 1. 项目目标
 
-EvalPlatform 是基于 EvalScope 构建的轻量级模型评估平台，目标是把原本依赖命令行的模型质量评测与性能压测能力，封装成可视化、可追踪、可复用的工程系统。
+ModelGauge 是基于 EvalScope 构建的轻量级模型评估平台，目标是把原本依赖命令行的模型质量评测与性能压测能力，封装成可视化、可追踪、可复用的工程系统。
 
 核心目标：
 
@@ -35,7 +35,7 @@ EvalPlatform 是基于 EvalScope 构建的轻量级模型评估平台，目标�
 | 框架 | React 18 + TypeScript | SPA 前端 |
 | 构建 | Vite 5 | 本地开发与代理 |
 | UI | Ant Design 5 | 表格、表单、弹窗等数据密集组件 |
-| 样式 | Tailwind CSS + CSS Variables | 暗色终端风格 |
+| 样式 | Tailwind CSS + CSS Variables | 企业级低对比暗色风格（AI Infra 观测台） |
 | 状态 | TanStack Query | 服务端状态缓存与刷新 |
 | 表单 | React Hook Form + Zod | 类型安全表单校验 |
 | 图表 | ECharts | 报告对比、趋势、雷达图 |
@@ -44,7 +44,7 @@ EvalPlatform 是基于 EvalScope 构建的轻量级模型评估平台，目标�
 ## 3. 目录结构
 
 ```text
-eval-platform/
+modelgauge/
 ├── backend/             FastAPI 后端
 │   ├── api/             REST 路由
 │   ├── api/schemas/     API 入参/出参 schema
@@ -166,7 +166,7 @@ eval-platform/
 ### 启动后端
 
 ```bash
-cd /home/hywl/xiangmu/vllm-skills-agent/eval-platform/backend
+cd /path/to/modelgauge/backend
 uv run uvicorn main:app --host 127.0.0.1 --port 8001
 ```
 
@@ -179,7 +179,7 @@ curl http://127.0.0.1:8001/api/health
 ### 启动前端
 
 ```bash
-cd /home/hywl/xiangmu/vllm-skills-agent/eval-platform/frontend
+cd /path/to/modelgauge/frontend
 pnpm dev
 ```
 
@@ -216,7 +216,7 @@ http://localhost:8001
 3. 同步前端 OpenAPI 类型。
 
 ```bash
-cd /home/hywl/xiangmu/vllm-skills-agent/eval-platform
+cd /path/to/modelgauge
 make gen-api
 ```
 
@@ -369,4 +369,3 @@ make gen-api
 - `platform.db` 是本地开发数据库，不应提交。
 - `outputs/`、`reports/`、`logs/` 是运行产物目录，不应提交真实产物。
 - `.claude/PROJECT.md` 用于记录长期技术决策和踩坑，`docs/DEVELOPMENT_PROCESS.md` 用于面向开发者的流程说明。
-

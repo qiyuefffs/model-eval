@@ -1,4 +1,4 @@
-# EvalPlatform
+# ModelGauge
 
 > 基于 [EvalScope](https://github.com/modelscope/evalscope) 构建的轻量级**模型评估平台**：质量评测 + 性能压测 + 历史对比，全部从浏览器配置触发。
 
@@ -68,6 +68,11 @@ Docker 启动后：
 
 数据会保存到项目根目录 `data/`，包括 SQLite、评测产物、自定义数据集和导出报告。
 
+> **关于 `SECRET_KEY`**：Docker 以生产模式（`DEBUG=false`）运行，后端要求配置自定义
+> `SECRET_KEY`（模型 API Key 的加密主密钥），否则启动会直接报错。`make docker-up` 会自动在根目录
+> 生成含随机密钥的 `.env`；离线包用 `./docker_manger.sh start` 时也会自动生成。
+> **请勿删除或更换该密钥**，否则已加密保存的 API Key 将无法解密。
+
 ### Docker 离线软件包
 
 ```bash
@@ -76,7 +81,7 @@ make docker-package
 
 生成内容位于 `release/`：
 
-- `eval-platform-docker-<版本>.tar.gz`：前后端镜像包
+- `modelgauge-docker-<版本>.tar.gz`：前后端镜像包
 - `docker-compose.yml`：部署编排文件
 - `.env.example`：部署环境变量模板
 - `README-docker.md`：目标机器部署说明
@@ -103,7 +108,7 @@ make gen-api  # 后端 OpenAPI -> 前端 TS 类型
 ## 项目结构
 
 ```
-eval-platform/
+modelgauge/
 ├── backend/             FastAPI 后端
 │   ├── main.py          应用入口
 │   ├── core/            配置、日志、安全
@@ -146,7 +151,7 @@ eval-platform/
 | 报告对比（雷达图 + 趋势） | ✅ 已完成 | 10 |
 | 报告导出（Markdown / HTML） | ✅ 已完成 | 10 |
 
-开发流程文档见 [`docs/DEVELOPMENT_PROCESS.md`](./docs/DEVELOPMENT_PROCESS.md)，详细技术决策与踩坑记录见 [`.claude/PROJECT.md`](./.claude/PROJECT.md)。
+开发流程文档见 [`docs/DEVELOPMENT_PROCESS.md`](./docs/DEVELOPMENT_PROCESS.md)。
 
 ---
 
@@ -162,14 +167,8 @@ eval-platform/
 
 ## 视觉风格
 
-**暗色终端美学** —— 工程师友好：
+**深蓝数据控制台** —— 克制、清晰、适合长时间查看：
 
-- 主背景：深炭黑 + subtle 网格
-- 强调色：终端绿（通过）/ 橙（运行中）/ 红（失败）
-- 字体：Manrope（正文）+ JetBrains Mono（代码 / 指标）
-
----
-
-## License
-
-Apache 2.0
+- 主背景：深海军蓝 + 柔和光晕细网格
+- 强调色：靛蓝（主操作）/ 青色（信息）/ 金色（运行中）
+- 字体：Inter（正文）+ IBM Plex Mono（代码 / 指标）

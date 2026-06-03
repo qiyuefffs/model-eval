@@ -6,7 +6,7 @@ ENV_FILE="$DEPLOY_DIR/.env"
 ENV_EXAMPLE_FILE="$DEPLOY_DIR/.env.example"
 
 log() {
-  printf '[EvalPlatform] %s\n' "$1"
+  printf '[ModelGauge] %s\n' "$1"
 }
 
 usage() {
@@ -29,19 +29,40 @@ ensure_docker() {
   }
 }
 
+gen_secret_key() {
+  if command -v openssl >/dev/null 2>&1; then
+    openssl rand -hex 32
+  elif command -v python3 >/dev/null 2>&1; then
+    python3 -c "import secrets; print(secrets.token_hex(32))"
+  else
+    head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n'
+  fi
+}
+
 ensure_env() {
   if [[ -f "$ENV_FILE" ]]; then
     return
   fi
 
-  if [[ -f "$ENV_EXAMPLE_FILE" ]]; then
-    cp "$ENV_EXAMPLE_FILE" "$ENV_FILE"
-    log "未发现 .env，已从 .env.example 创建。"
-    return
+  if [[ ! -f "$ENV_EXAMPLE_FILE" ]]; then
+    echo "缺少 .env 或 .env.example，无法读取端口配置。" >&2
+    exit 1
   fi
 
-  echo "缺少 .env 或 .env.example，无法读取端口配置。" >&2
-  exit 1
+  cp "$ENV_EXAMPLE_FILE" "$ENV_FILE"
+
+  # 生产模式（DEBUG=false）下后端强制要求自定义 SECRET_KEY，否则启动即报错。
+  # 首次生成 .env 时自动写入随机密钥，保证开箱即用且安全。
+  local key
+  key="$(gen_secret_key)"
+  awk -v k="$key" '
+    /^SECRET_KEY=/ { print "SECRET_KEY=" k; found=1; next }
+    { print }
+    END { if (!found) print "SECRET_KEY=" k }
+  ' "$ENV_FILE" > "$ENV_FILE.tmp" && mv "$ENV_FILE.tmp" "$ENV_FILE"
+
+  log "未发现 .env，已从 .env.example 创建，并生成随机 SECRET_KEY。"
+  log "请妥善保管 .env：删除或更换 SECRET_KEY 会导致已加密的模型 API Key 无法解密。"
 }
 
 load_env() {
