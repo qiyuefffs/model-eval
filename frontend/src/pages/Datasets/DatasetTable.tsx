@@ -65,7 +65,9 @@ export default function DatasetTable() {
       render: (name: string, record) => (
         <Space direction="vertical" size={2}>
           <Text strong>{name}</Text>
-          <Text style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-secondary)' }}>
+          <Text
+            style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-secondary)' }}
+          >
             {record.file_name}
           </Text>
           {record.description && (
@@ -84,9 +86,9 @@ export default function DatasetTable() {
         <Tag
           style={{
             fontFamily: 'var(--font-mono)',
-            color: 'var(--accent-info)',
-            borderColor: 'rgba(106,183,255,0.35)',
-            background: 'rgba(106,183,255,0.08)',
+            color: '#7dd3fc',
+            borderColor: 'rgba(56,189,248,0.24)',
+            background: 'rgba(56,189,248,0.12)',
           }}
         >
           {DATASET_TYPE_LABELS[type] ?? type}
@@ -98,7 +100,9 @@ export default function DatasetTable() {
       dataIndex: 'row_count',
       width: 100,
       render: (count: number) => (
-        <Text style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-primary)' }}>{count}</Text>
+        <Text style={{ fontFamily: 'var(--font-mono)', color: 'var(--accent-primary)' }}>
+          {count}
+        </Text>
       ),
     },
     {

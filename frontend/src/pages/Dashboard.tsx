@@ -1,8 +1,8 @@
-import { Badge, Card, Col, Row, Skeleton, Space, Statistic, Tag, Typography } from 'antd';
-import { motion } from 'framer-motion';
+import { Card, Skeleton, Space, Tag, Typography } from 'antd';
 import {
   ApiOutlined,
   CheckCircleFilled,
+  CheckCircleOutlined,
   CloseCircleFilled,
   DatabaseOutlined,
   ExperimentOutlined,
@@ -13,170 +13,140 @@ import { useModels } from '@/api/hooks/useModels';
 import { useBenchmarks } from '@/api/hooks/useDatasets';
 import { useEvalTasks } from '@/api/hooks/useEvalTasks';
 import { usePerfTasks } from '@/api/hooks/usePerfTasks';
+import PageHeader from '@/components/common/PageHeader';
+import MetricCard, { type MetricTone } from '@/components/common/MetricCard';
 
-const { Title, Paragraph, Text } = Typography;
+const { Text } = Typography;
 const RUNNING_STATUSES = new Set(['pending', 'running']);
 
-const cardMotion = {
-  initial: { opacity: 0, y: 12 },
-  animate: { opacity: 1, y: 0 },
-};
-
 /**
- * Dashboard — 平台首页
- *
  * Dashboard — 平台首页概览。
  * 展示后端连通状态和关键资源/任务统计。
  */
 export default function Dashboard() {
   const { data: health, isLoading, isError } = useHealth();
-  const { data: models, isLoading: modelsLoading } = useModels();
-  const { data: benchmarks, isLoading: benchmarksLoading } = useBenchmarks();
-  const { data: evalTasks, isLoading: evalTasksLoading } = useEvalTasks();
-  const { data: perfTasks, isLoading: perfTasksLoading } = usePerfTasks();
+  const { data: models } = useModels();
+  const { data: benchmarks } = useBenchmarks();
+  const { data: evalTasks } = useEvalTasks();
+  const { data: perfTasks } = usePerfTasks();
   const allTasks = [...(evalTasks ?? []), ...(perfTasks ?? [])];
   const runningTasks = allTasks.filter((task) => RUNNING_STATUSES.has(task.status)).length;
   const completedTasks = allTasks.filter((task) => task.status === 'succeeded').length;
-  const statsLoading = modelsLoading || benchmarksLoading || evalTasksLoading || perfTasksLoading;
-  const stats = [
+
+  const stats: {
+    icon: React.ReactNode;
+    title: string;
+    value: number;
+    description: string;
+    tone: MetricTone;
+  }[] = [
     {
       icon: <DatabaseOutlined />,
       title: '已注册模型',
       value: models?.length ?? 0,
-      color: 'var(--accent-info)',
-      delay: 0.15,
+      description: '模型总数',
+      tone: 'info',
     },
     {
       icon: <ExperimentOutlined />,
       title: '内置评测基准',
       value: benchmarks?.length ?? 0,
-      color: 'var(--accent-primary)',
-      delay: 0.2,
+      description: '基准总数',
+      tone: 'primary',
     },
     {
       icon: <ThunderboltOutlined />,
       title: '运行中任务',
       value: runningTasks,
-      color: 'var(--accent-warning)',
-      delay: 0.25,
+      description: '评测 + 压测',
+      tone: 'warning',
     },
     {
-      icon: <Badge status="success" />,
+      icon: <CheckCircleOutlined />,
       title: '历史评测',
       value: completedTasks,
-      color: 'var(--text-secondary)',
-      delay: 0.3,
+      description: '已完成任务',
+      tone: 'success',
     },
   ];
 
   return (
-    <div className="max-w-7xl mx-auto">
-      {/* 标题区 */}
-      <motion.div {...cardMotion} transition={{ duration: 0.4 }}>
-        <Space direction="vertical" size={4} style={{ marginBottom: 32 }}>
-          <Title level={2} style={{ margin: 0, color: 'var(--text-primary)' }}>
-            EvalPlatform
-          </Title>
-          <Paragraph
-            style={{
-              margin: 0,
-              color: 'var(--text-secondary)',
-              fontFamily: 'var(--font-mono)',
-              fontSize: 13,
-            }}
-          >
-            // 基于 EvalScope 的模型评估平台 · 质量评测 + 性能压测 + 历史对比
-          </Paragraph>
-        </Space>
-      </motion.div>
+    <div>
+      <PageHeader
+        title="ModelGauge"
+        subtitle="模型质量、性能与历史趋势，汇聚于一个清晰的评估工作台。"
+      />
 
-      {/* 后端连通状态卡片 */}
-      <motion.div {...cardMotion} transition={{ duration: 0.4, delay: 0.1 }}>
-        <Card
-          style={{ marginBottom: 24, borderColor: 'var(--border-subtle)' }}
-          title={
+      <Card
+        style={{ marginBottom: 16 }}
+        title={
+          <Space>
+            <ApiOutlined />
+            <span>后端服务状态</span>
+          </Space>
+        }
+      >
+        {isLoading ? (
+          <Skeleton active paragraph={{ rows: 2 }} />
+        ) : isError ? (
+          <Space direction="vertical" size="small">
             <Space>
-              <ApiOutlined />
-              <span>后端服务状态</span>
-            </Space>
-          }
-        >
-          {isLoading ? (
-            <Skeleton active paragraph={{ rows: 2 }} />
-          ) : isError ? (
-            <Space direction="vertical" size="small">
-              <Space>
-                <CloseCircleFilled style={{ color: 'var(--accent-danger)', fontSize: 18 }} />
-                <Text strong style={{ color: 'var(--accent-danger)' }}>
-                  无法连接到后端
-                </Text>
-              </Space>
-              <Text type="secondary" style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>
-                请确认后端服务已启动：
-                <Text code copyable style={{ marginLeft: 8 }}>
-                  ./scripts/start-dev.sh
-                </Text>
+              <CloseCircleFilled style={{ color: 'var(--accent-danger)', fontSize: 18 }} />
+              <Text strong style={{ color: 'var(--accent-danger)' }}>
+                无法连接到后端
               </Text>
             </Space>
-          ) : (
-            <Space size="large" wrap>
-              <Space>
-                <CheckCircleFilled style={{ color: 'var(--accent-primary)', fontSize: 18 }} />
-                <Text strong style={{ color: 'var(--accent-primary)' }}>
-                  在线
-                </Text>
-              </Space>
-              <Space>
-                <Text type="secondary">应用名：</Text>
-                <Tag color="default">{health?.app_name}</Tag>
-              </Space>
-              <Space>
-                <Text type="secondary">版本：</Text>
-                <Tag color="green" style={{ fontFamily: 'var(--font-mono)' }}>
-                  v{health?.version}
-                </Tag>
-              </Space>
-              <Space>
-                <Text type="secondary">心跳时间：</Text>
-                <Text style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>
-                  {health?.timestamp}
-                </Text>
-              </Space>
+            <Text type="secondary" style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+              请确认后端服务已启动：
+              <Text code copyable style={{ marginLeft: 8 }}>
+                ./scripts/start-dev.sh
+              </Text>
+            </Text>
+          </Space>
+        ) : (
+          <Space size="large" wrap>
+            <Space>
+              <CheckCircleFilled style={{ color: 'var(--accent-success)', fontSize: 18 }} />
+              <Text strong style={{ color: 'var(--accent-success)' }}>
+                在线
+              </Text>
             </Space>
-          )}
-        </Card>
-      </motion.div>
+            <Space>
+              <Text type="secondary">应用名：</Text>
+              <Tag>{health?.app_name}</Tag>
+            </Space>
+            <Space>
+              <Text type="secondary">版本：</Text>
+              <Tag style={{ fontFamily: 'var(--font-mono)' }}>v{health?.version}</Tag>
+            </Space>
+            <Space>
+              <Text type="secondary">心跳时间：</Text>
+              <Text style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+                {health?.timestamp}
+              </Text>
+            </Space>
+          </Space>
+        )}
+      </Card>
 
-      {/* 关键资源与任务统计 */}
-      <Row gutter={[16, 16]}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
+          gap: 16,
+        }}
+      >
         {stats.map((stat) => (
-          <Col key={stat.title} xs={24} sm={12} lg={6}>
-            <motion.div {...cardMotion} transition={{ duration: 0.4, delay: stat.delay }}>
-              <Card hoverable style={{ borderColor: 'var(--border-subtle)' }}>
-                {statsLoading ? (
-                  <Skeleton active paragraph={false} />
-                ) : (
-                  <Statistic
-                    title={
-                      <Space style={{ color: 'var(--text-secondary)' }}>
-                        <span style={{ color: stat.color }}>{stat.icon}</span>
-                        {stat.title}
-                      </Space>
-                    }
-                    value={stat.value}
-                    valueStyle={{
-                      color: stat.color,
-                      fontFamily: 'var(--font-mono)',
-                      fontWeight: 600,
-                    }}
-                  />
-                )}
-              </Card>
-            </motion.div>
-          </Col>
+          <MetricCard
+            key={stat.title}
+            icon={stat.icon}
+            title={stat.title}
+            value={stat.value}
+            description={stat.description}
+            tone={stat.tone}
+          />
         ))}
-      </Row>
-
+      </div>
     </div>
   );
 }

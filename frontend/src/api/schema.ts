@@ -220,6 +220,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/perf-tasks/{task_id}/export.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 导出性能压测完整指标
+         * @description 导出任务参数、EvalScope 摘要、Percentile、客户端派生指标和 vLLM 服务端指标。
+         */
+        get: operations["export_perf_task_csv_endpoint_api_perf_tasks__task_id__export_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/perf-tasks/{task_id}/export.report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * 导出性能压测精简指标矩阵
+         * @description 按图二风格导出精简指标矩阵（行=指标，列=并发），格式支持 Markdown / HTML。
+         */
+        get: operations["export_perf_task_report_endpoint_api_perf_tasks__task_id__export_report_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/reports/tasks": {
         parameters: {
             query?: never;
@@ -733,8 +773,16 @@ export interface components {
             avg_ttft?: number | null;
             /** Avg Tpot */
             avg_tpot?: number | null;
+            /** Concurrency */
+            concurrency?: number | null;
+            /** Max Tokens */
+            max_tokens?: number | null;
             /** Metrics */
             metrics?: {
+                [key: string]: unknown;
+            };
+            /** Detailed Metrics */
+            detailed_metrics?: {
                 [key: string]: unknown;
             };
         };
@@ -797,6 +845,10 @@ export interface components {
             };
             /** Percentiles */
             percentiles: {
+                [key: string]: unknown;
+            };
+            /** Detailed Metrics */
+            detailed_metrics: {
                 [key: string]: unknown;
             };
             /**
@@ -879,6 +931,11 @@ export interface components {
              * @default 21600
              */
             total_timeout: number | null;
+            /**
+             * Metrics Url
+             * @description vLLM Prometheus /metrics 地址；留空时根据模型 API URL 自动推断
+             */
+            metrics_url?: string | null;
             /** Description */
             description?: string | null;
             /** Tags */
@@ -930,6 +987,8 @@ export interface components {
             read_timeout: number | null;
             /** Total Timeout */
             total_timeout: number | null;
+            /** Metrics Url */
+            metrics_url: string | null;
             /** Work Dir */
             work_dir: string | null;
             /** Log Path */
@@ -1658,6 +1717,73 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PerfTaskRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_perf_task_csv_endpoint_api_perf_tasks__task_id__export_csv_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description 性能压测任务 id */
+                task_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_perf_task_report_endpoint_api_perf_tasks__task_id__export_report_get: {
+        parameters: {
+            query?: {
+                /** @description 导出格式：markdown 或 html */
+                format?: string;
+            };
+            header?: never;
+            path: {
+                /** @description 性能压测任务 id */
+                task_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

@@ -1,61 +1,62 @@
 import { theme, type ThemeConfig } from 'antd';
 
-// AntD 5 暗色主题 — 与 tokens.css 对齐
+// AntD 5 企业级低对比暗色主题 — 与 tokens.css 对齐
 export const antdTheme: ThemeConfig = {
   algorithm: theme.darkAlgorithm,
   cssVar: true,
   token: {
-    colorPrimary: '#50c878',
-    colorSuccess: '#50c878',
-    colorWarning: '#ffb454',
-    colorError: '#ff5370',
-    colorInfo: '#6ab7ff',
+    colorPrimary: '#38bdf8',
+    colorSuccess: '#22c55e',
+    colorWarning: '#f59e0b',
+    colorError: '#ef4444',
+    colorInfo: '#38bdf8',
 
-    colorBgBase: '#0a0e14',
-    colorBgContainer: '#11161d',
-    colorBgElevated: '#1a212c',
-    colorBgLayout: '#0a0e14',
+    colorBgBase: '#080c14',
+    colorBgContainer: '#0f172a',
+    colorBgElevated: '#111827',
+    colorBgLayout: '#080c14',
 
-    colorTextBase: '#e6e1cf',
-    colorText: '#e6e1cf',
-    colorTextSecondary: '#b3b1ad',
-    colorTextTertiary: '#5c6773',
+    colorTextBase: '#e5e7eb',
+    colorText: '#e5e7eb',
+    colorTextSecondary: '#94a3b8',
+    colorTextTertiary: '#64748b',
 
-    colorBorder: '#1f2731',
-    colorBorderSecondary: '#3d4a5c',
+    colorBorder: 'rgba(148, 163, 184, 0.16)',
+    colorBorderSecondary: 'rgba(148, 163, 184, 0.24)',
 
-    fontFamily: '"Manrope", system-ui, sans-serif',
-    fontFamilyCode: '"JetBrains Mono", monospace',
+    fontFamily: '"Inter", system-ui, sans-serif',
+    fontFamilyCode: '"IBM Plex Mono", monospace',
 
-    borderRadius: 6,
+    borderRadius: 10,
     wireframe: false,
   },
   components: {
     Layout: {
-      headerBg: '#11161d',
-      siderBg: '#0a0e14',
-      bodyBg: '#0a0e14',
+      headerBg: '#080c14',
+      siderBg: '#020617',
+      bodyBg: '#080c14',
     },
     Menu: {
-      darkItemBg: '#0a0e14',
-      darkSubMenuItemBg: '#11161d',
-      darkItemSelectedBg: 'rgba(80, 200, 120, 0.15)',
-      darkItemSelectedColor: '#50c878',
+      darkItemBg: '#020617',
+      darkSubMenuItemBg: '#020617',
+      darkItemSelectedBg: 'rgba(56, 189, 248, 0.12)',
+      darkItemSelectedColor: '#7dd3fc',
+      itemBorderRadius: 8,
     },
     Table: {
-      headerBg: '#1a212c',
-      rowHoverBg: '#1a212c',
-      borderColor: '#1f2731',
+      headerBg: '#0f172a',
+      rowHoverBg: 'rgba(148, 163, 184, 0.06)',
+      borderColor: 'rgba(148, 163, 184, 0.10)',
     },
     Button: {
       fontWeight: 600,
     },
     Card: {
-      colorBgContainer: '#11161d',
+      colorBgContainer: '#0f172a',
     },
     Tag: {
-      defaultBg: '#1a212c',
-      defaultColor: '#b3b1ad',
+      defaultBg: '#111827',
+      defaultColor: '#94a3b8',
     },
   },
 };

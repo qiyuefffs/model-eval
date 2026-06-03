@@ -6,9 +6,9 @@ import {
   Alert,
   AutoComplete,
   Button,
+  Drawer,
   Form,
   Input,
-  Modal,
   Select,
   Space,
   Tag,
@@ -23,16 +23,8 @@ const { Text } = Typography;
 const DEFAULT_API_KEY = 'Bearer-local-dev-key';
 
 const schema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(1, '请输入显示名')
-    .max(120, '不超过 120 字符'),
-  model_id: z
-    .string()
-    .trim()
-    .min(1, '请输入平台侧模型 ID')
-    .max(200, '不超过 200 字符'),
+  name: z.string().trim().min(1, '请输入显示名').max(120, '不超过 120 字符'),
+  model_id: z.string().trim().min(1, '请输入平台侧模型 ID').max(200, '不超过 200 字符'),
   api_url: z
     .string()
     .trim()
@@ -50,7 +42,12 @@ interface Props {
 }
 
 // 常用平台预设 — 一键填充端点
-const ENDPOINT_PRESETS: Array<{ label: string; url: string; example_model: string; tags: string[] }> = [
+const ENDPOINT_PRESETS: Array<{
+  label: string;
+  url: string;
+  example_model: string;
+  tags: string[];
+}> = [
   {
     label: 'DeepSeek 官方',
     url: 'https://api.deepseek.com/v1/chat/completions',
@@ -124,9 +121,9 @@ export default function CreateModelModal({ open, onClose }: Props) {
   };
 
   return (
-    <Modal
+    <Drawer
       open={open}
-      onCancel={() => {
+      onClose={() => {
         reset();
         onClose();
       }}
@@ -136,8 +133,7 @@ export default function CreateModelModal({ open, onClose }: Props) {
           <span>注册新模型</span>
         </Space>
       }
-      footer={null}
-      width={680}
+      width={520}
       destroyOnClose
     >
       <Alert
@@ -145,11 +141,11 @@ export default function CreateModelModal({ open, onClose }: Props) {
         showIcon
         message={
           <Text style={{ fontSize: 13 }}>
-            仅支持 <Text code>OpenAI 兼容</Text> 的 chat/completions 端点。
-            API Key 将被对称加密存储，前端永远不会返回明文。
+            仅支持 <Text code>OpenAI 兼容</Text> 的 chat/completions 端点。 API Key
+            将被对称加密存储，前端永远不会返回明文。
           </Text>
         }
-        style={{ marginBottom: 16, background: 'rgba(106,183,255,0.08)', borderColor: 'rgba(106,183,255,0.3)' }}
+        style={{ marginBottom: 16 }}
       />
 
       {/* 平台预设快捷填充 */}
@@ -190,7 +186,9 @@ export default function CreateModelModal({ open, onClose }: Props) {
           label={
             <Space size={4}>
               <span>API 端点</span>
-              <Text type="secondary" style={{ fontSize: 12 }}>（chat/completions 完整路径）</Text>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                （chat/completions 完整路径）
+              </Text>
             </Space>
           }
           required
@@ -259,7 +257,9 @@ export default function CreateModelModal({ open, onClose }: Props) {
                 ]}
                 placeholder={DEFAULT_API_KEY}
                 filterOption={(inputValue, option) =>
-                  String(option?.value ?? '').toLowerCase().includes(inputValue.toLowerCase())
+                  String(option?.value ?? '')
+                    .toLowerCase()
+                    .includes(inputValue.toLowerCase())
                 }
               >
                 <Input.Password
@@ -317,6 +317,6 @@ export default function CreateModelModal({ open, onClose }: Props) {
           </Button>
         </div>
       </Form>
-    </Modal>
+    </Drawer>
   );
 }

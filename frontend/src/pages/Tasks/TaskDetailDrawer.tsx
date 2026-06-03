@@ -95,10 +95,14 @@ export default function TaskDetailDrawer({ task, open, onClose }: Props) {
               </Space>
             </Descriptions.Item>
             <Descriptions.Item label="输出目录">
-              <Text style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{current.work_dir ?? '—'}</Text>
+              <Text style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+                {current.work_dir ?? '—'}
+              </Text>
             </Descriptions.Item>
             <Descriptions.Item label="日志路径">
-              <Text style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{current.log_path ?? '—'}</Text>
+              <Text style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+                {current.log_path ?? '—'}
+              </Text>
             </Descriptions.Item>
             <Descriptions.Item label="创建时间">
               {dayjs(current.created_at).format('YYYY-MM-DD HH:mm:ss')}
@@ -123,7 +127,9 @@ export default function TaskDetailDrawer({ task, open, onClose }: Props) {
               pagination={false}
               style={{ marginTop: 8 }}
               locale={{
-                emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无结果摘要" />,
+                emptyText: (
+                  <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无结果摘要" />
+                ),
               }}
             />
           </div>
@@ -135,7 +141,9 @@ export default function TaskDetailDrawer({ task, open, onClose }: Props) {
               showIcon
               style={{ marginTop: 8 }}
               message="任务日志已记录"
-              description={current.log_path ? `日志文件：${current.log_path}` : '当前任务暂无日志文件路径。'}
+              description={
+                current.log_path ? `日志文件：${current.log_path}` : '当前任务暂无日志文件路径。'
+              }
             />
           </div>
 

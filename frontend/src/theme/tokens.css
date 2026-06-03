@@ -1,24 +1,28 @@
 /* 设计 token — 与 Tailwind 配置同步，可在 AntD 主题与原生 CSS 中通用 */
 
 :root {
-  --bg-primary: #0a0e14;
-  --bg-secondary: #11161d;
-  --bg-elevated: #1a212c;
+  /* 企业级低对比暗色：背景层级 */
+  --bg-primary: #080c14;
+  --bg-secondary: #0f172a;
+  --bg-elevated: #111827;
+  --bg-sidebar: #020617;
 
-  --accent-primary: #50c878;
-  --accent-warning: #ffb454;
-  --accent-danger: #ff5370;
-  --accent-info: #6ab7ff;
+  --accent-primary: #38bdf8;
+  --accent-success: #22c55e;
+  --accent-warning: #f59e0b;
+  --accent-danger: #ef4444;
+  --accent-info: #38bdf8;
+  --accent-purple: #8b5cf6;
 
-  --text-primary: #e6e1cf;
-  --text-secondary: #b3b1ad;
-  --text-muted: #5c6773;
+  --text-primary: #e5e7eb;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
 
-  --border-subtle: #1f2731;
-  --border-strong: #3d4a5c;
+  --border-subtle: rgba(148, 163, 184, 0.16);
+  --border-strong: rgba(148, 163, 184, 0.24);
 
-  --font-sans: 'Manrope', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 }
 
 /* 全局基础样式 */
@@ -35,18 +39,12 @@ body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   font-feature-settings: 'cv11', 'ss01';
-
-  /* subtle 网格背景 — 工程师友好 */
-  background-image:
-    linear-gradient(rgba(80, 200, 120, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(80, 200, 120, 0.025) 1px, transparent 1px);
-  background-size: 32px 32px;
 }
 
 .app-content {
   height: calc(100vh - 64px);
   overflow: hidden;
-  padding: 24px;
+  padding: 28px;
   box-sizing: border-box;
 }
 
@@ -114,10 +112,37 @@ pre,
   border-radius: 4px;
 }
 *::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-primary);
+  background: var(--text-muted);
 }
 
 /* 隐藏 AntD 默认的 wave 涟漪噪点（与暗色不搭） */
 .ant-wave {
   display: none !important;
+}
+
+/* 卡片：弱边框、无发光，企业级克制风格 */
+.ant-card {
+  border: 1px solid var(--border-subtle);
+  box-shadow: none;
+}
+
+.ant-card-hoverable:hover {
+  border-color: var(--border-strong) !important;
+  box-shadow: none;
+}
+
+/* 侧边菜单选中项：淡蓝左侧指示条，替代霓虹发光 */
+.ant-menu-dark.ant-menu-inline .ant-menu-item {
+  position: relative;
+}
+.ant-menu-dark.ant-menu-inline .ant-menu-item-selected::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 18px;
+  border-radius: 0 3px 3px 0;
+  background: var(--accent-primary);
 }

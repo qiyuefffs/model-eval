@@ -6,7 +6,6 @@ import {
   LoadingOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
-import { motion, AnimatePresence } from 'framer-motion';
 
 import { useTestModel, type ConnectivityTestResult } from '@/api/hooks/useModels';
 
@@ -67,7 +66,9 @@ export default function TestConnectivityButton({ modelPk, modelName }: Props) {
                   耗时：<Text code>{latency_ms} ms</Text>
                 </Text>
               )}
-              <Text style={{ fontSize: 12, fontFamily: 'var(--font-mono)', wordBreak: 'break-all' }}>
+              <Text
+                style={{ fontSize: 12, fontFamily: 'var(--font-mono)', wordBreak: 'break-all' }}
+              >
                 {detail}
               </Text>
             </Space>
@@ -98,18 +99,7 @@ export default function TestConnectivityButton({ modelPk, modelName }: Props) {
       >
         {isLoading ? '测试中' : '测试连通'}
       </Button>
-      <AnimatePresence>
-        {showResult && lastResult && (
-          <motion.div
-            initial={{ opacity: 0, x: -8 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -8 }}
-            transition={{ duration: 0.2 }}
-          >
-            {renderResultBadge()}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {showResult && lastResult && <div>{renderResultBadge()}</div>}
     </Space>
   );
 }

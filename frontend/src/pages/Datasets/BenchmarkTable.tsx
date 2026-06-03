@@ -51,7 +51,9 @@ export default function BenchmarkTable() {
       render: (displayName: string, record) => (
         <Space direction="vertical" size={2}>
           <Text strong>{displayName}</Text>
-          <Text style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--accent-info)' }}>
+          <Text
+            style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--accent-info)' }}
+          >
             {record.name}
           </Text>
         </Space>
@@ -96,9 +98,9 @@ export default function BenchmarkTable() {
                 style={{
                   marginInlineEnd: 0,
                   fontFamily: 'var(--font-mono)',
-                  color: 'var(--accent-primary)',
-                  borderColor: 'rgba(80,200,120,0.35)',
-                  background: 'rgba(80,200,120,0.08)',
+                  color: '#7dd3fc',
+                  borderColor: 'rgba(56,189,248,0.24)',
+                  background: 'rgba(56,189,248,0.12)',
                 }}
               >
                 {backend}

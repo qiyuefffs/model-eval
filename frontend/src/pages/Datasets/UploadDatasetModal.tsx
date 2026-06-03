@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { App, Alert, Button, Form, Input, Modal, Select, Space, Typography, Upload } from 'antd';
+import { App, Alert, Button, Drawer, Form, Input, Select, Space, Typography, Upload } from 'antd';
 import type { UploadFile } from 'antd/es/upload/interface';
 import { InboxOutlined } from '@ant-design/icons';
 
@@ -41,6 +41,7 @@ export default function UploadDatasetModal({ open, onClose }: Props) {
   const { message } = App.useApp();
   const uploadDataset = useUploadDataset();
   const [form] = Form.useForm<FormValues>();
+  const datasetType = Form.useWatch('datasetType', form);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
 
   const resetAndClose = () => {
@@ -72,17 +73,16 @@ export default function UploadDatasetModal({ open, onClose }: Props) {
   };
 
   return (
-    <Modal
+    <Drawer
       open={open}
-      onCancel={resetAndClose}
+      onClose={resetAndClose}
       title={
         <Space>
           <InboxOutlined style={{ color: 'var(--accent-primary)' }} />
           <span>上传自定义数据集</span>
         </Space>
       }
-      footer={null}
-      width={720}
+      width={520}
       destroyOnClose
     >
       <Alert
@@ -90,11 +90,11 @@ export default function UploadDatasetModal({ open, onClose }: Props) {
         showIcon
         message={
           <Text style={{ fontSize: 13 }}>
-            支持 UTF-8 编码的 <Text code>JSON</Text> / <Text code>JSONL</Text>。
-            后端会按 EvalScope 的 general_* 通用数据格式做基础结构校验。
+            支持 UTF-8 编码的 <Text code>JSON</Text> / <Text code>JSONL</Text>。 后端会按 EvalScope
+            的 general_* 通用数据格式做基础结构校验。
           </Text>
         }
-        style={{ marginBottom: 16, background: 'rgba(106,183,255,0.08)', borderColor: 'rgba(106,183,255,0.3)' }}
+        style={{ marginBottom: 16 }}
       />
 
       <Form<FormValues>
@@ -118,12 +118,16 @@ export default function UploadDatasetModal({ open, onClose }: Props) {
           label="数据类型"
           name="datasetType"
           rules={[{ required: true, message: '请选择数据类型' }]}
-          help={DATASET_TYPE_OPTIONS.find((item) => item.value === form.getFieldValue('datasetType'))?.help}
+          help={DATASET_TYPE_OPTIONS.find((item) => item.value === datasetType)?.help}
         >
           <Select options={DATASET_TYPE_OPTIONS.map(({ value, label }) => ({ value, label }))} />
         </Form.Item>
 
-        <Form.Item label="标签（选填）" name="tags" help="按 Enter 创建标签，上传时会以逗号分隔传给后端">
+        <Form.Item
+          label="标签（选填）"
+          name="tags"
+          help="按 Enter 创建标签，上传时会以逗号分隔传给后端"
+        >
           <Select mode="tags" placeholder="例如：客服、回归、中文" tokenSeparators={[',', ' ']} />
         </Form.Item>
 
@@ -149,7 +153,9 @@ export default function UploadDatasetModal({ open, onClose }: Props) {
               <InboxOutlined style={{ color: 'var(--accent-primary)' }} />
             </p>
             <p className="ant-upload-text">拖拽文件到这里，或点击选择</p>
-            <p className="ant-upload-hint">仅保存到后端 custom_datasets 目录，不会上传到外部服务。</p>
+            <p className="ant-upload-hint">
+              仅保存到后端 custom_datasets 目录，不会上传到外部服务。
+            </p>
           </Upload.Dragger>
         </Form.Item>
 
@@ -160,6 +166,6 @@ export default function UploadDatasetModal({ open, onClose }: Props) {
           </Button>
         </div>
       </Form>
-    </Modal>
+    </Drawer>
   );
 }

@@ -1,5 +1,16 @@
 import { useMemo, useState } from 'react';
-import { Button, Empty, Input, Popconfirm, Space, Table, Tag, Tooltip, Typography, App } from 'antd';
+import {
+  Button,
+  Empty,
+  Input,
+  Popconfirm,
+  Space,
+  Table,
+  Tag,
+  Tooltip,
+  Typography,
+  App,
+} from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { DeleteOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -53,7 +64,9 @@ export default function ModelTable() {
   };
 
   const toggleTag = (tag: string) => {
-    setSelectedTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
+    );
   };
 
   const columns: ColumnsType<ModelRead> = [

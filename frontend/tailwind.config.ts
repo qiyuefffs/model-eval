@@ -9,29 +9,32 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // 与 AntD 主题对齐的暗色终端美学
+        // 与 AntD 主题对齐的企业级低对比暗色风格
         bg: {
-          primary: '#0a0e14',
-          secondary: '#11161d',
-          elevated: '#1a212c',
+          primary: '#080c14',
+          secondary: '#0f172a',
+          elevated: '#111827',
+          sidebar: '#020617',
         },
         accent: {
-          primary: '#50c878', // 终端绿：通过/主操作
-          warning: '#ffb454', // 橙：运行中
-          danger: '#ff5370', // 红：失败
-          info: '#6ab7ff', // 蓝：信息
+          primary: '#38bdf8', // sky：主操作
+          success: '#22c55e', // 绿色：成功
+          warning: '#f59e0b', // 琥珀：运行中/警告
+          danger: '#ef4444', // 红色：失败
+          info: '#38bdf8', // 青蓝：信息
+          purple: '#8b5cf6', // 紫色：辅助维度
         },
         muted: {
-          DEFAULT: '#5c6773',
+          DEFAULT: '#64748b',
         },
         border: {
-          subtle: '#1f2731',
-          strong: '#3d4a5c',
+          subtle: 'rgba(148, 163, 184, 0.16)',
+          strong: 'rgba(148, 163, 184, 0.24)',
         },
       },
       fontFamily: {
-        sans: ['Manrope', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        mono: ['IBM Plex Mono', 'monospace'],
       },
       animation: {
         breathe: 'breathe 2.4s ease-in-out infinite',

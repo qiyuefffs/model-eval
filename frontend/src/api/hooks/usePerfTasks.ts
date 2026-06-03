@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../client';
 import type { components } from '../schema';
+import { downloadBlob } from '@/utils/download';
 
 export type PerfTaskCreate = components['schemas']['PerfTaskCreate'];
 export type PerfTaskRead = components['schemas']['PerfTaskRead'];
@@ -59,4 +60,19 @@ export function useCreatePerfTask() {
       qc.invalidateQueries({ queryKey: PERF_TASKS_KEY });
     },
   });
+}
+
+export async function downloadPerfTaskMetrics(taskId: number) {
+  const { data } = await apiClient.get<Blob>(`/perf-tasks/${taskId}/export.csv`, {
+    responseType: 'blob',
+  });
+  downloadBlob(data, `perf-task-${taskId}-metrics.csv`);
+}
+
+export async function downloadPerfTaskReport(taskId: number, format: 'markdown' | 'html') {
+  const { data } = await apiClient.get<Blob>(`/perf-tasks/${taskId}/export.report`, {
+    params: { format },
+    responseType: 'blob',
+  });
+  downloadBlob(data, `perf-task-${taskId}.${format === 'html' ? 'html' : 'md'}`);
 }
