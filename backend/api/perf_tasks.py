@@ -65,6 +65,21 @@ async def get_perf_task_endpoint(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
 
 
+@router.delete(
+    "/{task_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="删除性能压测任务",
+)
+async def delete_perf_task_endpoint(
+    task_id: int = Path(..., ge=1, description="性能压测任务 id"),
+    session: AsyncSession = Depends(get_session),
+) -> None:
+    try:
+        await perf_task_service.delete_perf_task(session, task_id)
+    except perf_task_service.PerfTaskNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+
+
 @router.get(
     "/{task_id}/export.csv",
     summary="导出性能压测完整指标",

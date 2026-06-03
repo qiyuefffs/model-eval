@@ -411,6 +411,16 @@ async def get_perf_task_read(session: AsyncSession, task_id: int) -> PerfTaskRea
     return _to_read(task, await _load_result(session, task_id))
 
 
+async def delete_perf_task(session: AsyncSession, task_id: int) -> None:
+    """删除性能压测任务及其结果摘要。"""
+    task = await session.get(PerfTask, task_id)
+    if task is None:
+        raise PerfTaskNotFoundError(f"性能压测任务 id={task_id} 不存在")
+    await session.execute(delete(PerfResult).where(PerfResult.task_id == task_id))
+    await session.delete(task)
+    await session.commit()
+
+
 async def list_runnable_task_ids(session: AsyncSession) -> list[int]:
     stmt = select(PerfTask.id).where(PerfTask.status.in_(("pending", "running"))).order_by(
         PerfTask.created_at.asc()

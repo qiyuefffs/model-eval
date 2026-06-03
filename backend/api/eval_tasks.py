@@ -62,3 +62,18 @@ async def get_eval_task_endpoint(
         return await eval_task_service.get_eval_task_read(session, task_id)
     except eval_task_service.EvalTaskNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+
+
+@router.delete(
+    "/{task_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="删除质量评测任务",
+)
+async def delete_eval_task_endpoint(
+    task_id: int = Path(..., ge=1, description="评测任务 id"),
+    session: AsyncSession = Depends(get_session),
+) -> None:
+    try:
+        await eval_task_service.delete_eval_task(session, task_id)
+    except eval_task_service.EvalTaskNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e

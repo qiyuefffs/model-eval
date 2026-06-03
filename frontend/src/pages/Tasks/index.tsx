@@ -1,9 +1,24 @@
 import { useMemo, useState } from 'react';
-import { Button, Card, Col, Empty, Input, Row, Select, Space, Table, Tag, Typography } from 'antd';
+import {
+  App,
+  Button,
+  Card,
+  Col,
+  Empty,
+  Input,
+  Popconfirm,
+  Row,
+  Select,
+  Space,
+  Table,
+  Tag,
+  Typography,
+} from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
   AlertOutlined,
   CheckCircleOutlined,
+  DeleteOutlined,
   EyeOutlined,
   FieldTimeOutlined,
   ReloadOutlined,
@@ -13,8 +28,13 @@ import {
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
 
-import { useEvalTasks, type EvalTaskRead, type EvalTaskStatus } from '@/api/hooks/useEvalTasks';
-import { usePerfTasks, type PerfTaskRead } from '@/api/hooks/usePerfTasks';
+import {
+  useDeleteEvalTask,
+  useEvalTasks,
+  type EvalTaskRead,
+  type EvalTaskStatus,
+} from '@/api/hooks/useEvalTasks';
+import { useDeletePerfTask, usePerfTasks, type PerfTaskRead } from '@/api/hooks/usePerfTasks';
 import PerfDetailDrawer from '@/pages/Perf/PerfDetailDrawer';
 import PageHeader from '@/components/common/PageHeader';
 import MetricCard, { type MetricTone } from '@/components/common/MetricCard';
@@ -63,11 +83,14 @@ function toMetric(task: EvalTaskRead | PerfTaskRead, kind: TaskKind) {
 
 export default function TasksPage() {
   const navigate = useNavigate();
+  const { message } = App.useApp();
   const [keyword, setKeyword] = useState('');
   const [status, setStatus] = useState<EvalTaskStatus>();
   const [kind, setKind] = useState<TaskKind>();
   const [selectedEvalTask, setSelectedEvalTask] = useState<EvalTaskRead>();
   const [selectedPerfTask, setSelectedPerfTask] = useState<PerfTaskRead>();
+  const deleteEvalTask = useDeleteEvalTask();
+  const deletePerfTask = useDeletePerfTask();
   const {
     data: evalTasks = [],
     isFetching: evalFetching,
@@ -172,6 +195,19 @@ export default function TasksPage() {
     navigate(task.kind === 'eval' ? '/eval' : '/perf');
   };
 
+  const handleDelete = async (task: UnifiedTask) => {
+    try {
+      if (task.kind === 'eval') {
+        await deleteEvalTask.mutateAsync(task.id);
+      } else {
+        await deletePerfTask.mutateAsync(task.id);
+      }
+      message.success(`已删除任务 "${task.name}"`);
+    } catch (err: unknown) {
+      message.error(err instanceof Error ? err.message : '删除失败');
+    }
+  };
+
   const columns: ColumnsType<UnifiedTask> = [
     {
       title: 'ID',
@@ -265,7 +301,7 @@ export default function TasksPage() {
       title: '操作',
       key: 'actions',
       fixed: 'right',
-      width: 170,
+      width: 220,
       render: (_, record) => (
         <Space size={4}>
           <Button
@@ -279,6 +315,26 @@ export default function TasksPage() {
           <Button size="small" type="link" onClick={() => goSource(record)}>
             来源
           </Button>
+          <Popconfirm
+            title={`删除任务 "${record.name}"？`}
+            description="此操作会删除任务记录及结果摘要，不可恢复。"
+            okText="确认删除"
+            cancelText="取消"
+            okButtonProps={{ danger: true }}
+            onConfirm={() => handleDelete(record)}
+          >
+            <Button
+              size="small"
+              danger
+              type="text"
+              icon={<DeleteOutlined />}
+              loading={
+                record.kind === 'eval'
+                  ? deleteEvalTask.isPending && deleteEvalTask.variables === record.id
+                  : deletePerfTask.isPending && deletePerfTask.variables === record.id
+              }
+            />
+          </Popconfirm>
         </Space>
       ),
     },

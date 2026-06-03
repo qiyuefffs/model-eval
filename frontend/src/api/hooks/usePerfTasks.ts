@@ -62,6 +62,19 @@ export function useCreatePerfTask() {
   });
 }
 
+export function useDeletePerfTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (taskId: number) => {
+      await apiClient.delete(`/perf-tasks/${taskId}`);
+      return taskId;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: PERF_TASKS_KEY });
+    },
+  });
+}
+
 export async function downloadPerfTaskMetrics(taskId: number) {
   const { data } = await apiClient.get<Blob>(`/perf-tasks/${taskId}/export.csv`, {
     responseType: 'blob',

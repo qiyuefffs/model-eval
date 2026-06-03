@@ -281,6 +281,16 @@ async def get_eval_task_read(session: AsyncSession, task_id: int) -> EvalTaskRea
     return _to_read(task, await _load_results(session, task_id))
 
 
+async def delete_eval_task(session: AsyncSession, task_id: int) -> None:
+    """删除评测任务及其结果摘要。"""
+    task = await session.get(EvalTask, task_id)
+    if task is None:
+        raise EvalTaskNotFoundError(f"评测任务 id={task_id} 不存在")
+    await session.execute(delete(EvalResult).where(EvalResult.task_id == task_id))
+    await session.delete(task)
+    await session.commit()
+
+
 async def list_runnable_task_ids(session: AsyncSession) -> list[int]:
     """恢复启动前处于 pending/running 的任务。"""
     stmt = select(EvalTask.id).where(EvalTask.status.in_(("pending", "running"))).order_by(

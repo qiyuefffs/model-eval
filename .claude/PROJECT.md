@@ -1,3 +1,21 @@
+# 项目记忆
+
+## 技术栈
+- 前端：React 18、Vite、TypeScript、Ant Design、TanStack Query。
+- 后端：FastAPI、SQLModel/SQLAlchemy Async、SQLite。
+- 任务类型：质量评测任务使用 `/api/eval-tasks`，性能压测任务使用 `/api/perf-tasks`。
+
+## 开发约定
+- 前端 API hook 放在 `frontend/src/api/hooks`，列表类 mutation 成功后通过 `invalidateQueries` 刷新对应 query key。
+- 任务中心 `frontend/src/pages/Tasks/index.tsx` 聚合质量评测与性能压测任务，使用 `kind` 区分来源。
+- 后端路由层只做 HTTP 状态转换，业务逻辑放在 `backend/services/*_task_service.py`。
+
+## 踩坑记录
+- `frontend/src/api/schema.ts` 是 OpenAPI 自动生成文件，不应手工改类型；当前 hook 直接用 `apiClient.delete` 不依赖 paths 类型。
+- 删除任务只清理数据库任务记录和结果摘要，不清理 `outputs`/`logs` 中已生成文件，避免误删运行中进程仍可能访问的文件。
+
+## 待办清单
+- 如后续需要“取消运行中任务”，应单独设计 worker 取消/中断机制，不能只通过删除数据库记录实现。
 # ModelGauge 项目长期记忆
 
 > 这是 ModelGauge 项目的"长期记忆"文件。每次发生**重大决策变更**或**踩坑解决**后必须更新。

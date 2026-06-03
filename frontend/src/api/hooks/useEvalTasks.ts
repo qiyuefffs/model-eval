@@ -60,3 +60,16 @@ export function useCreateEvalTask() {
     },
   });
 }
+
+export function useDeleteEvalTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (taskId: number) => {
+      await apiClient.delete(`/eval-tasks/${taskId}`);
+      return taskId;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: EVAL_TASKS_KEY });
+    },
+  });
+}
