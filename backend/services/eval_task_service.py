@@ -60,6 +60,18 @@ async def _load_results(session: AsyncSession, task_id: int) -> list[EvalResultR
     return [_to_result_read(item) for item in result.scalars().all()]
 
 
+async def _load_results_map(session: AsyncSession, task_ids: list[int]) -> dict[int, list[EvalResultRead]]:
+    """一次性加载多个任务的结果，避免列表接口 N+1 查询。"""
+    if not task_ids:
+        return {}
+    stmt = select(EvalResult).where(EvalResult.task_id.in_(task_ids)).order_by(EvalResult.id.asc())
+    result = await session.execute(stmt)
+    grouped: dict[int, list[EvalResultRead]] = {}
+    for item in result.scalars().all():
+        grouped.setdefault(item.task_id, []).append(_to_result_read(item))
+    return grouped
+
+
 def _to_read(task: EvalTask, results: list[EvalResultRead] | None = None) -> EvalTaskRead:
     return EvalTaskRead(
         id=task.id,  # type: ignore[arg-type]
@@ -252,12 +264,13 @@ async def list_eval_tasks(
     stmt = select(EvalTask).order_by(EvalTask.created_at.desc())
     if status:
         stmt = stmt.where(EvalTask.status == status)
-    if model_pk:
+    if model_pk is not None:
         stmt = stmt.where(EvalTask.model_pk == model_pk)
 
     result = await session.execute(stmt)
     tasks = result.scalars().all()
-    return [_to_read(item, await _load_results(session, item.id)) for item in tasks]
+    results_map = await _load_results_map(session, [item.id for item in tasks if item.id is not None])
+    return [_to_read(item, results_map.get(item.id, [])) for item in tasks]
 
 
 async def get_eval_task_read(session: AsyncSession, task_id: int) -> EvalTaskRead:
@@ -320,25 +333,34 @@ async def run_eval_task(task_id: int) -> None:
         _model, plain_key = await get_plain_api_key(session, task.model_pk)
         custom_datasets = await _load_custom_datasets(session, task.custom_dataset_ids or [])
         dataset_names, dataset_args = _compose_dataset_args(task, custom_datasets)
+        # 在 session 内取出后续需要的标量，避免 session 关闭后再访问 ORM 实例。
+        log_path_str = task.log_path
+        work_dir = task.work_dir or str(get_settings().outputs_dir)
+        eval_backend = task.eval_backend
+        eval_batch_size = task.eval_batch_size
+        limit_value = task.limit
+        generation_config = task.generation_config or {}
+        model_id = model.model_id
+        model_api_url = model.api_url
 
-    log_path = Path(task.log_path or "")
+    log_path = Path(log_path_str or "")
     if log_path:
         log_path.parent.mkdir(parents=True, exist_ok=True)
         log_path.write_text(f"[{_utcnow().isoformat()}] 开始评测任务 #{task_id}\n", encoding="utf-8")
 
     task_config = TaskConfig(
-        model=model.model_id,
-        model_id=_safe_evalscope_model_id(model.model_id),
-        api_url=model.api_url,
+        model=model_id,
+        model_id=_safe_evalscope_model_id(model_id),
+        api_url=model_api_url,
         api_key=plain_key,
         eval_type=EvalType.OPENAI_API,
         datasets=dataset_names,
         dataset_args=dataset_args,
-        eval_backend=task.eval_backend,
-        eval_batch_size=task.eval_batch_size,
-        limit=_normalize_limit(task.limit),
-        generation_config=task.generation_config or {},
-        work_dir=task.work_dir or str(get_settings().outputs_dir),
+        eval_backend=eval_backend,
+        eval_batch_size=eval_batch_size,
+        limit=_normalize_limit(limit_value),
+        generation_config=generation_config,
+        work_dir=work_dir,
         no_timestamp=True,
         enable_progress_tracker=True,
         ignore_errors=False,

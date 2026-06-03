@@ -25,6 +25,11 @@ class PerfTaskCreate(BaseModel):
     connect_timeout: int | None = Field(default=None, ge=1)
     read_timeout: int | None = Field(default=None, ge=1)
     total_timeout: int | None = Field(default=21600, ge=1)
+    metrics_url: str | None = Field(
+        default=None,
+        max_length=1000,
+        description="vLLM Prometheus /metrics 地址；留空时根据模型 API URL 自动推断",
+    )
     description: str | None = Field(default=None, max_length=2000)
     tags: list[str] = Field(default_factory=list, max_length=20)
 
@@ -46,6 +51,7 @@ class PerfResultRead(BaseModel):
     success_rate: float | None
     metrics: dict[str, Any]
     percentiles: dict[str, Any]
+    detailed_metrics: dict[str, Any]
     created_at: datetime
 
 
@@ -71,6 +77,7 @@ class PerfTaskRead(BaseModel):
     connect_timeout: int | None
     read_timeout: int | None
     total_timeout: int | None
+    metrics_url: str | None
     work_dir: str | None
     log_path: str | None
     result_summary: dict[str, Any] | None

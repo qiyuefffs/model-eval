@@ -1,7 +1,7 @@
 [project]
-name = "eval-platform-backend"
+name = "modelgauge-backend"
 version = "0.1.0"
-description = "EvalPlatform 后端 — 基于 EvalScope 的模型评估平台"
+description = "ModelGauge 后端 — 基于 EvalScope 的模型评估平台"
 readme = "README.md"
 requires-python = ">=3.12"
 authors = [

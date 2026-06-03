@@ -50,11 +50,20 @@ async def _ensure_sqlite_dev_columns(conn) -> None:
         "perf_dataset": "ALTER TABLE perf_tasks ADD COLUMN perf_dataset VARCHAR(60) NOT NULL DEFAULT 'prompt'",
         "custom_dataset_id": "ALTER TABLE perf_tasks ADD COLUMN custom_dataset_id INTEGER",
         "dataset_path": "ALTER TABLE perf_tasks ADD COLUMN dataset_path VARCHAR(1000)",
+        "metrics_url": "ALTER TABLE perf_tasks ADD COLUMN metrics_url VARCHAR(1000)",
     }
     for column, ddl in migrations.items():
         if column not in columns:
             await conn.execute(text(ddl))
             logger.info(f"SQLite 开发库补列完成：perf_tasks.{column}")
+
+    result = await conn.execute(text("PRAGMA table_info(perf_results)"))
+    result_columns = {row[1] for row in result.fetchall()}
+    if "detailed_metrics" not in result_columns:
+        await conn.execute(
+            text("ALTER TABLE perf_results ADD COLUMN detailed_metrics JSON NOT NULL DEFAULT '{}'")
+        )
+        logger.info("SQLite 开发库补列完成：perf_results.detailed_metrics")
 
 
 @asynccontextmanager

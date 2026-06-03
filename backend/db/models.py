@@ -224,6 +224,7 @@ class PerfTask(SQLModel, table=True):
     connect_timeout: int | None = Field(default=None, nullable=True)
     read_timeout: int | None = Field(default=None, nullable=True)
     total_timeout: int | None = Field(default=21600, nullable=True)
+    metrics_url: str | None = Field(default=None, sa_column=Column(String(1000), nullable=True))
 
     work_dir: str | None = Field(default=None, sa_column=Column(String(1000), nullable=True))
     log_path: str | None = Field(default=None, sa_column=Column(String(1000), nullable=True))
@@ -260,5 +261,6 @@ class PerfResult(SQLModel, table=True):
     success_rate: float | None = Field(default=None, sa_column=Column(Float, nullable=True))
     metrics: dict = Field(default_factory=dict, sa_column=Column(JSON, nullable=False, default=dict))
     percentiles: dict = Field(default_factory=dict, sa_column=Column(JSON, nullable=False, default=dict))
+    detailed_metrics: dict = Field(default_factory=dict, sa_column=Column(JSON, nullable=False, default=dict))
 
     created_at: datetime = Field(default_factory=_utcnow, nullable=False)

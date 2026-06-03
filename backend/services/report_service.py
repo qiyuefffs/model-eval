@@ -24,6 +24,13 @@ from api.schemas.report import (
 )
 from core.config import get_settings
 from db.models import EvalResult, EvalTask, PerfResult, PerfTask
+from services.perf_metrics_service import (
+    PerfMatrixColumn,
+    build_perf_matrix_column,
+    perf_scenario_note,
+    render_perf_matrix_html_sections,
+    render_perf_matrix_markdown,
+)
 
 
 def _utcnow() -> datetime:
@@ -243,7 +250,10 @@ async def compare_reports(session: AsyncSession, payload: ReportCompareRequest) 
                     avg_latency=result.avg_latency,
                     avg_ttft=result.avg_ttft,
                     avg_tpot=result.avg_tpot,
+                    concurrency=task.concurrency,
+                    max_tokens=task.max_tokens,
                     metrics=result.metrics or {},
+                    detailed_metrics=result.detailed_metrics or {},
                 )
             )
             for row in _percentile_rows(result):
@@ -294,10 +304,6 @@ async def compare_reports(session: AsyncSession, payload: ReportCompareRequest) 
 
 def _fmt(value: float | None) -> str:
     return "-" if value is None else f"{value:.4f}"
-
-
-def _fmt_percent(value: float | None) -> str:
-    return "-" if value is None else f"{value * 100:.2f}%"
 
 
 def _md(value: Any) -> str:
@@ -414,147 +420,37 @@ def _append_eval_markdown(lines: list[str], report: ReportCompareResponse) -> No
     lines.append("")
 
 
-def _perf_scale_values(report: ReportCompareResponse) -> tuple[float, float, float, float]:
-    max_req = max((row.request_throughput or 0 for row in report.perf_metrics), default=1)
-    max_token = max((row.total_token_throughput or 0 for row in report.perf_metrics), default=1)
-    ttft_values = [row.avg_ttft for row in report.perf_metrics if row.avg_ttft]
-    tpot_values = [row.avg_tpot for row in report.perf_metrics if row.avg_tpot]
-    min_ttft = min(ttft_values, default=1)
-    min_tpot = min(tpot_values, default=1)
-    return max(max_req, 1), max(max_token, 1), min_ttft, min_tpot
-
-
-def _perf_radar_points(report: ReportCompareResponse) -> list[list[Any]]:
-    max_req, max_token, min_ttft, min_tpot = _perf_scale_values(report)
-    rows: list[list[Any]] = []
+def _perf_matrix_columns(report: ReportCompareResponse) -> list[PerfMatrixColumn]:
+    """把报告里的 perf 指标行转成精简矩阵列，按并发升序排列（单任务即单列）。"""
+    columns: list[PerfMatrixColumn] = []
     for row in report.perf_metrics:
-        rows.append(
-            [
-                row.task_id,
-                row.task_name,
-                row.model_name,
-                _fmt(((row.request_throughput or 0) / max_req) * 100),
-                _fmt(((row.total_token_throughput or 0) / max_token) * 100),
-                _fmt((row.success_rate or 0) * 100),
-                _fmt((min_ttft / row.avg_ttft) * 100 if row.avg_ttft else 0),
-                _fmt((min_tpot / row.avg_tpot) * 100 if row.avg_tpot else 0),
-            ]
+        header = f"并发 {row.concurrency}" if row.concurrency is not None else _md(row.task_name)
+        columns.append(
+            build_perf_matrix_column(
+                header=header,
+                concurrency=row.concurrency,
+                max_tokens=row.max_tokens,
+                total_requests=row.total_requests,
+                failed_requests=row.failed_requests,
+                total_token_throughput=row.total_token_throughput,
+                metrics=row.metrics,
+                detailed_metrics=row.detailed_metrics,
+            )
         )
-    return rows
-
-
-def _append_perf_chart_points(lines: list[str], report: ReportCompareResponse) -> None:
-    lines.extend(
-        [
-            "### 吞吐对比数据",
-            "",
-            "| 任务 ID | 任务 | 模型 | Req/s | Token/s |",
-            "|---:|---|---|---:|---:|",
-        ]
-    )
-    for row in report.perf_metrics:
-        lines.append(
-            f"| {row.task_id} | {_md(row.task_name)} | {_md(row.model_name)} | "
-            f"{_fmt(row.request_throughput)} | {_fmt(row.total_token_throughput)} |"
-        )
-
-    lines.extend(
-        [
-            "",
-            "### 延迟趋势对比数据",
-            "",
-            "| 任务 ID | 任务 | 模型 | Avg Lat(ms) | TTFT(ms) | TPOT(ms) |",
-            "|---:|---|---|---:|---:|---:|",
-        ]
-    )
-    for row in report.perf_metrics:
-        lines.append(
-            f"| {row.task_id} | {_md(row.task_name)} | {_md(row.model_name)} | {_fmt(row.avg_latency)} | "
-            f"{_fmt(row.avg_ttft)} | {_fmt(row.avg_tpot)} |"
-        )
-
-    lines.extend(
-        [
-            "",
-            "### 成功率对比数据",
-            "",
-            "| 任务 ID | 任务 | 模型 | 成功率 | 成功请求 | 失败请求 |",
-            "|---:|---|---|---:|---:|---:|",
-        ]
-    )
-    for row in report.perf_metrics:
-        lines.append(
-            f"| {row.task_id} | {_md(row.task_name)} | {_md(row.model_name)} | {_fmt_percent(row.success_rate)} | "
-            f"{row.succeed_requests} | {row.failed_requests} |"
-        )
-
-    lines.extend(
-        [
-            "",
-            "### 性能综合雷达归一化数据",
-            "",
-            "| 任务 ID | 任务 | 模型 | Req/s | Token/s | 成功率 | 低 TTFT | 低 TPOT |",
-            "|---:|---|---|---:|---:|---:|---:|---:|",
-        ]
-    )
-    for row in _perf_radar_points(report):
-        lines.append("| " + " | ".join(_md(value) for value in row) + " |")
-
-    lines.extend(
-        [
-            "",
-            "### 性能指标热力图归一化数据",
-            "",
-            "| 任务 ID | 任务 | 模型 | Req/s | Token/s | 成功率 | TTFT 反向得分 | TPOT 反向得分 |",
-            "|---:|---|---|---:|---:|---:|---:|---:|",
-        ]
-    )
-    for row in _perf_radar_points(report):
-        lines.append("| " + " | ".join(_md(value) for value in row) + " |")
+    columns.sort(key=lambda col: (col.concurrency is None, col.concurrency or 0))
+    return columns
 
 
 def _append_perf_markdown(lines: list[str], report: ReportCompareResponse) -> None:
+    columns = _perf_matrix_columns(report)
+    note = perf_scenario_note(columns[0]) if len(columns) == 1 else ""
     lines.extend(["## 性能压测结果", ""])
-    _append_perf_chart_points(lines, report)
-    lines.extend(
-        [
-            "",
-            "### 核心指标",
-            "",
-            "| 任务 ID | 任务 | 模型 | 请求 | 成功 | 失败 | 成功率 | Req/s | Token/s | Avg Lat(ms) | TTFT(ms) | TPOT(ms) |",
-            "|---:|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
-        ]
-    )
-    for row in report.perf_metrics:
-        lines.append(
-            f"| {row.task_id} | {_md(row.task_name)} | {_md(row.model_name)} | {row.total_requests} | "
-            f"{row.succeed_requests} | {row.failed_requests} | {_fmt_percent(row.success_rate)} | "
-            f"{_fmt(row.request_throughput)} | {_fmt(row.total_token_throughput)} | {_fmt(row.avg_latency)} | "
-            f"{_fmt(row.avg_ttft)} | {_fmt(row.avg_tpot)} |"
-        )
-
-    if report.perf_percentiles:
-        lines.extend(
-            [
-                "",
-                "### Percentile 明细",
-                "",
-                "| 任务 ID | 任务 | 模型 | P | Latency | TTFT | TPOT | Output Thpt | Total Thpt |",
-                "|---:|---|---|---|---:|---:|---:|---:|---:|",
-            ]
-        )
-        for row in report.perf_percentiles:
-            lines.append(
-                f"| {row.task_id} | {_md(row.task_name)} | {_md(row.model_name)} | {_md(row.percentile)} | "
-                f"{_fmt(row.latency)} | {_fmt(row.ttft)} | {_fmt(row.tpot)} | "
-                f"{_fmt(row.output_throughput)} | {_fmt(row.total_throughput)} |"
-            )
-    lines.append("")
+    lines.extend(render_perf_matrix_markdown(columns, note))
 
 
 def _render_markdown(report: ReportCompareResponse) -> str:
     lines = [
-        "# EvalPlatform 对比报告",
+        "# ModelGauge 对比报告",
         "",
         f"- 生成时间：{report.generated_at.isoformat()}",
         f"- 报告类型：{_task_type_label(report.task_type)}",
@@ -591,7 +487,7 @@ def _render_html(report: ReportCompareResponse) -> str:
         for task in report.tasks
     ]
     sections = [
-        "<h1>EvalPlatform 对比报告</h1>",
+        "<h1>ModelGauge 对比报告</h1>",
         "<section class='meta'>"
         f"<p><strong>生成时间：</strong>{escape(report.generated_at.isoformat())}</p>"
         f"<p><strong>报告类型：</strong>{escape(_task_type_label(report.task_type))}</p>"
@@ -650,118 +546,20 @@ def _render_html(report: ReportCompareResponse) -> str:
                 ]
             )
     else:
-        metric_rows = [
-            [
-                row.task_id,
-                row.task_name,
-                row.model_name,
-                row.total_requests,
-                row.succeed_requests,
-                row.failed_requests,
-                _fmt_percent(row.success_rate),
-                _fmt(row.request_throughput),
-                _fmt(row.total_token_throughput),
-                _fmt(row.avg_latency),
-                _fmt(row.avg_ttft),
-                _fmt(row.avg_tpot),
-            ]
-            for row in report.perf_metrics
-        ]
-        sections.extend(
-            [
-                "<h2>性能压测结果</h2>",
-                "<h3>吞吐对比数据</h3>",
-                _html_table(
-                    ["任务 ID", "任务", "模型", "Req/s", "Token/s"],
-                    [
-                        [
-                            row.task_id,
-                            row.task_name,
-                            row.model_name,
-                            _fmt(row.request_throughput),
-                            _fmt(row.total_token_throughput),
-                        ]
-                        for row in report.perf_metrics
-                    ],
-                ),
-                "<h3>延迟趋势对比数据</h3>",
-                _html_table(
-                    ["任务 ID", "任务", "模型", "Avg Lat", "TTFT", "TPOT"],
-                    [
-                        [
-                            row.task_id,
-                            row.task_name,
-                            row.model_name,
-                            _fmt(row.avg_latency),
-                            _fmt(row.avg_ttft),
-                            _fmt(row.avg_tpot),
-                        ]
-                        for row in report.perf_metrics
-                    ],
-                ),
-                "<h3>成功率对比数据</h3>",
-                _html_table(
-                    ["任务 ID", "任务", "模型", "成功率", "成功请求", "失败请求"],
-                    [
-                        [
-                            row.task_id,
-                            row.task_name,
-                            row.model_name,
-                            _fmt_percent(row.success_rate),
-                            row.succeed_requests,
-                            row.failed_requests,
-                        ]
-                        for row in report.perf_metrics
-                    ],
-                ),
-                "<h3>性能综合雷达归一化数据</h3>",
-                _html_table(
-                    ["任务 ID", "任务", "模型", "Req/s", "Token/s", "成功率", "低 TTFT", "低 TPOT"],
-                    _perf_radar_points(report),
-                ),
-                "<h3>性能指标热力图归一化数据</h3>",
-                _html_table(
-                    ["任务 ID", "任务", "模型", "Req/s", "Token/s", "成功率", "TTFT 反向得分", "TPOT 反向得分"],
-                    _perf_radar_points(report),
-                ),
-                "<h3>核心指标</h3>",
-                _html_table(
-                    ["任务 ID", "任务", "模型", "请求", "成功", "失败", "成功率", "Req/s", "Token/s", "Avg Lat", "TTFT", "TPOT"],
-                    metric_rows,
-                ),
-            ]
-        )
-        if report.perf_percentiles:
-            percentile_rows = [
-                [
-                    row.task_id,
-                    row.task_name,
-                    row.model_name,
-                    row.percentile,
-                    _fmt(row.latency),
-                    _fmt(row.ttft),
-                    _fmt(row.tpot),
-                    _fmt(row.output_throughput),
-                    _fmt(row.total_throughput),
-                ]
-                for row in report.perf_percentiles
-            ]
-            sections.extend(
-                [
-                    "<h3>Percentile 明细</h3>",
-                    _html_table(["任务 ID", "任务", "模型", "P", "Latency", "TTFT", "TPOT", "Output Thpt", "Total Thpt"], percentile_rows),
-                ]
-            )
+        columns = _perf_matrix_columns(report)
+        note = perf_scenario_note(columns[0]) if len(columns) == 1 else ""
+        sections.append("<h2>性能压测结果</h2>")
+        sections.extend(render_perf_matrix_html_sections(columns, note))
 
     return (
         "<!doctype html><html><head><meta charset='utf-8'>"
-        "<title>EvalPlatform 对比报告</title>"
+        "<title>ModelGauge 对比报告</title>"
         "<style>"
-        "body{font-family:Manrope,system-ui,sans-serif;padding:32px;background:#0a0e14;color:#e6e1cf;line-height:1.6}"
-        "h1,h2,h3{color:#f5f2e8} h1{margin-top:0} .meta{color:#b3b1ad;margin-bottom:28px}"
-        "table{width:100%;border-collapse:collapse;margin:12px 0 28px;background:#111821;border:1px solid #293241}"
-        "th,td{padding:10px 12px;border-bottom:1px solid #293241;text-align:left;font-size:13px}"
-        "th{color:#50c878;background:#17202b} tr:hover td{background:#162230}"
+        "body{font-family:Inter,system-ui,sans-serif;padding:32px;background:#080d1a;color:#f2f5ff;line-height:1.6}"
+        "h1,h2,h3{color:#f2f5ff} h1{margin-top:0} .meta{color:#a8b3cf;margin-bottom:28px}"
+        "table{width:100%;border-collapse:collapse;margin:12px 0 28px;background:#0e1628;border:1px solid #1c2a47}"
+        "th,td{padding:10px 12px;border-bottom:1px solid #1c2a47;text-align:left;font-size:13px}"
+        "th{color:#aab4ff;background:#15213a} tr:hover td{background:#14203a}"
         "</style></head><body>"
         + "\n".join(sections)
         + "</body></html>"

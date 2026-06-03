@@ -24,8 +24,12 @@ async def _worker_loop() -> None:
             raise
         except (Exception, SystemExit) as e:
             logger.exception(f"性能压测任务失败：#{task_id}")
-            async with session_scope() as session:
-                await perf_task_service.mark_task_failed(session, task_id, str(e))
+            # 标记失败本身也可能抛错（如 DB 抖动）；内层兜底，绝不让单任务异常拖垮整条队列。
+            try:
+                async with session_scope() as session:
+                    await perf_task_service.mark_task_failed(session, task_id, str(e))
+            except Exception:
+                logger.exception(f"标记性能压测任务失败状态时再次出错：#{task_id}")
         finally:
             _queue.task_done()
 

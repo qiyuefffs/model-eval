@@ -87,7 +87,10 @@ class PerfMetricRow(BaseModel):
     avg_latency: float | None = None
     avg_ttft: float | None = None
     avg_tpot: float | None = None
+    concurrency: int | None = None
+    max_tokens: int | None = None
     metrics: dict[str, Any] = Field(default_factory=dict)
+    detailed_metrics: dict[str, Any] = Field(default_factory=dict)
 
 
 class PerfPercentileRow(BaseModel):

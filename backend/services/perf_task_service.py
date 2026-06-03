@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import re
 from datetime import UTC, datetime
 from pathlib import Path
@@ -18,6 +19,17 @@ from api.schemas.perf_task import PerfResultRead, PerfTaskCreate, PerfTaskRead
 from core.config import get_settings
 from db.models import CustomDataset, PerfResult, PerfTask
 from services.model_service import ModelNotFoundError, get_plain_api_key
+from services.perf_metrics_service import (
+    VllmMetricsSampler,
+    build_detailed_metrics,
+    build_perf_matrix_column,
+    export_metrics_csv,
+    infer_metrics_url,
+    perf_scenario_note,
+    redact_benchmark_args,
+    render_perf_matrix_document,
+    render_perf_matrix_markdown,
+)
 
 TERMINAL_STATUSES = {"succeeded", "failed"}
 
@@ -180,6 +192,7 @@ def _to_result_read(result: PerfResult) -> PerfResultRead:
         success_rate=success_rate,
         metrics=metrics,
         percentiles=percentiles,
+        detailed_metrics=result.detailed_metrics or {},
         created_at=result.created_at,
     )
 
@@ -189,6 +202,18 @@ async def _load_result(session: AsyncSession, task_id: int) -> PerfResultRead | 
     result = await session.execute(stmt)
     obj = result.scalars().first()
     return _to_result_read(obj) if obj else None
+
+
+async def _load_results_map(session: AsyncSession, task_ids: list[int]) -> dict[int, PerfResultRead]:
+    """一次性加载多个任务各自最新的结果，避免列表接口 N+1 查询。"""
+    if not task_ids:
+        return {}
+    stmt = select(PerfResult).where(PerfResult.task_id.in_(task_ids)).order_by(PerfResult.id.asc())
+    result = await session.execute(stmt)
+    latest: dict[int, PerfResult] = {}
+    for obj in result.scalars().all():
+        latest[obj.task_id] = obj  # 升序遍历，最后写入的即最大 id（最新结果）
+    return {task_id: _to_result_read(obj) for task_id, obj in latest.items()}
 
 
 def _to_read(task: PerfTask, result: PerfResultRead | None = None) -> PerfTaskRead:
@@ -212,6 +237,7 @@ def _to_read(task: PerfTask, result: PerfResultRead | None = None) -> PerfTaskRe
         connect_timeout=task.connect_timeout,
         read_timeout=task.read_timeout,
         total_timeout=task.total_timeout,
+        metrics_url=task.metrics_url,
         work_dir=task.work_dir,
         log_path=task.log_path,
         result_summary=task.result_summary,
@@ -227,7 +253,12 @@ def _to_read(task: PerfTask, result: PerfResultRead | None = None) -> PerfTaskRe
     )
 
 
-def _build_result(task_id: int, metrics: dict[str, Any], percentiles: dict[str, Any]) -> PerfResult:
+def _build_result(
+    task_id: int,
+    metrics: dict[str, Any],
+    percentiles: dict[str, Any],
+    detailed_metrics: dict[str, Any],
+) -> PerfResult:
     total = _int_metric(metrics, Metrics.TOTAL_REQUESTS)
     succeeded = _int_metric(metrics, Metrics.SUCCEED_REQUESTS)
     failed = _int_metric(metrics, Metrics.FAILED_REQUESTS)
@@ -246,6 +277,7 @@ def _build_result(task_id: int, metrics: dict[str, Any], percentiles: dict[str, 
         success_rate=success_rate,
         metrics=metrics,
         percentiles=percentiles,
+        detailed_metrics=detailed_metrics,
     )
 
 
@@ -290,7 +322,7 @@ async def _prepare_dataset_path(session: AsyncSession, task: PerfTask) -> str | 
     if dataset is None:
         raise PerfTaskValidationError(f"自定义数据集 id={task.custom_dataset_id} 不存在")
 
-    prompts = _load_custom_prompts(dataset)
+    prompts = await asyncio.to_thread(_load_custom_prompts, dataset)
     if not prompts:
         raise PerfTaskValidationError(f"自定义数据集 '{dataset.name}' 没有可用于压测的 prompt 字段")
 
@@ -334,6 +366,7 @@ async def create_perf_task(session: AsyncSession, payload: PerfTaskCreate) -> Pe
         connect_timeout=payload.connect_timeout,
         read_timeout=payload.read_timeout,
         total_timeout=payload.total_timeout,
+        metrics_url=str(payload.metrics_url) if payload.metrics_url else infer_metrics_url(model.api_url),
         work_dir=str(settings.outputs_dir / "perf_tasks" / "pending"),
         description=payload.description,
         tags=payload.tags or [],
@@ -362,12 +395,13 @@ async def list_perf_tasks(
     stmt = select(PerfTask).order_by(PerfTask.created_at.desc())
     if status:
         stmt = stmt.where(PerfTask.status == status)
-    if model_pk:
+    if model_pk is not None:
         stmt = stmt.where(PerfTask.model_pk == model_pk)
 
     result = await session.execute(stmt)
     tasks = result.scalars().all()
-    return [_to_read(item, await _load_result(session, item.id)) for item in tasks]
+    results_map = await _load_results_map(session, [item.id for item in tasks if item.id is not None])
+    return [_to_read(item, results_map.get(item.id)) for item in tasks]
 
 
 async def get_perf_task_read(session: AsyncSession, task_id: int) -> PerfTaskRead:
@@ -426,53 +460,91 @@ async def run_perf_task(task_id: int) -> None:
         if dataset_path:
             task.dataset_path = dataset_path
             await session.commit()
+        # 在 session 内把后续需要的标量取成局部变量，避免 session 关闭后再访问 ORM 实例
+        # （否则一旦关掉 expire_on_commit 就会触发 DetachedInstanceError）。
+        log_path_str = task.log_path
+        work_dir = task.work_dir or str(get_settings().outputs_dir)
+        perf_dataset = task.perf_dataset
+        prompt = task.prompt
+        request_count = task.request_count
+        concurrency = task.concurrency
+        rate = task.rate
+        max_tokens = task.max_tokens
+        temperature = task.temperature
+        stream = task.stream
+        connect_timeout = task.connect_timeout
+        read_timeout = task.read_timeout
+        total_timeout = task.total_timeout
+        dataset_path_final = task.dataset_path
+        model_id = model.model_id
+        model_api_url = model.api_url
+        metrics_url = task.metrics_url or infer_metrics_url(model.api_url)
 
-    log_path = Path(task.log_path or "")
+    log_path = Path(log_path_str or "")
     if log_path:
         log_path.parent.mkdir(parents=True, exist_ok=True)
         log_path.write_text(f"[{_utcnow().isoformat()}] 开始性能压测任务 #{task_id}\n", encoding="utf-8")
 
-    use_prompt = task.perf_dataset == "prompt"
+    use_prompt = perf_dataset == "prompt"
     args = Arguments(
-        model=model.model_id,
-        model_id=model.model_id,
+        model=model_id,
+        model_id=model_id,
         api="openai",
-        url=model.api_url,
+        url=model_api_url,
         api_key=plain_key,
-        number=task.request_count,
-        parallel=task.concurrency,
-        rate=task.rate,
-        open_loop=task.rate > 0,
-        prompt=task.prompt if use_prompt else None,
-        dataset="custom" if task.perf_dataset == "custom" else task.perf_dataset,
-        dataset_path=task.dataset_path,
-        max_tokens=task.max_tokens,
-        temperature=task.temperature,
-        stream=task.stream,
-        connect_timeout=task.connect_timeout,
-        read_timeout=task.read_timeout,
-        total_timeout=task.total_timeout,
-        outputs_dir=task.work_dir or str(get_settings().outputs_dir),
+        number=request_count,
+        parallel=concurrency,
+        rate=rate,
+        open_loop=rate > 0,
+        prompt=prompt if use_prompt else None,
+        dataset="custom" if perf_dataset == "custom" else perf_dataset,
+        dataset_path=dataset_path_final,
+        max_tokens=max_tokens,
+        temperature=temperature,
+        stream=stream,
+        connect_timeout=connect_timeout,
+        read_timeout=read_timeout,
+        total_timeout=total_timeout,
+        outputs_dir=work_dir,
         no_timestamp=True,
         enable_progress_tracker=True,
     )
     # EvalScope 1.7.0 的 Arguments 会把这些值规范成 list，但 run_benchmark 单次路径按标量使用。
-    args.number = task.request_count
-    args.parallel = -1 if task.rate > 0 else task.concurrency
-    args.rate = task.rate
+    args.number = request_count
+    args.parallel = -1 if rate > 0 else concurrency
+    args.rate = rate
 
-    metrics, percentiles = await run_benchmark(args)
+    sampler = VllmMetricsSampler(
+        metrics_url=metrics_url,
+        output_path=Path(work_dir) / "vllm_metrics.jsonl",
+    )
+    sampler_task = asyncio.create_task(sampler.run(), name=f"vllm-metrics-sampler-{task_id}")
+    try:
+        metrics, percentiles = await run_benchmark(args)
+    finally:
+        sampler.stop()
+        await sampler_task
+        redact_benchmark_args(work_dir)
     result_summary = _normalize_metrics(metrics)
     percentile_summary = _normalize_percentiles(percentiles)
+    # build_detailed_metrics 内部用同步 sqlite3 读逐请求 DB，移到线程池避免阻塞事件循环。
+    detailed_metrics = await asyncio.to_thread(build_detailed_metrics, work_dir, result_summary, sampler)
+
+    # EvalScope 正常返回但全部请求失败时，不应误标 succeeded。
+    total = _int_metric(result_summary, Metrics.TOTAL_REQUESTS)
+    succeeded = _int_metric(result_summary, Metrics.SUCCEED_REQUESTS)
+    all_failed = total > 0 and succeeded == 0
 
     async with session_scope() as session:
         task = await session.get(PerfTask, task_id)
         if task is None:
             return
         await session.execute(delete(PerfResult).where(PerfResult.task_id == task_id))
-        session.add(_build_result(task_id, result_summary, percentile_summary))
+        session.add(_build_result(task_id, result_summary, percentile_summary, detailed_metrics))
         now = _utcnow()
-        task.status = "succeeded"
+        task.status = "failed" if all_failed else "succeeded"
+        if all_failed:
+            task.error_message = f"全部 {total} 个请求均失败，请检查目标服务可用性与压测参数"
         task.result_summary = result_summary
         task.percentile_summary = percentile_summary
         task.updated_at = now
@@ -481,4 +553,44 @@ async def run_perf_task(task_id: int) -> None:
 
     if log_path:
         with log_path.open("a", encoding="utf-8") as f:
-            f.write(f"[{_utcnow().isoformat()}] 性能压测任务 #{task_id} 完成\n")
+            status_text = "失败（全部请求失败）" if all_failed else "完成"
+            f.write(f"[{_utcnow().isoformat()}] 性能压测任务 #{task_id} {status_text}\n")
+
+
+async def export_perf_task_csv(session: AsyncSession, task_id: int) -> tuple[str, str]:
+    """导出单个性能压测任务的完整指标 CSV。"""
+    task = await session.get(PerfTask, task_id)
+    if task is None:
+        raise PerfTaskNotFoundError(f"性能压测任务 id={task_id} 不存在")
+    result = await _load_result(session, task_id)
+    if result is None:
+        raise PerfTaskValidationError("任务尚未生成性能指标，无法导出")
+    return f"perf-task-{task_id}-metrics.csv", export_metrics_csv(task, result)
+
+
+async def export_perf_task_report(session: AsyncSession, task_id: int, fmt: str) -> tuple[str, str, str]:
+    """导出单个性能压测任务的精简指标矩阵（Markdown / HTML）。"""
+    task = await session.get(PerfTask, task_id)
+    if task is None:
+        raise PerfTaskNotFoundError(f"性能压测任务 id={task_id} 不存在")
+    result = await _load_result(session, task_id)
+    if result is None:
+        raise PerfTaskValidationError("任务尚未生成性能指标，无法导出")
+
+    column = build_perf_matrix_column(
+        header=f"并发 {task.concurrency}",
+        concurrency=task.concurrency,
+        max_tokens=task.max_tokens,
+        total_requests=result.total_requests,
+        failed_requests=result.failed_requests,
+        total_token_throughput=result.total_token_throughput,
+        metrics=result.metrics,
+        detailed_metrics=result.detailed_metrics,
+    )
+    note = perf_scenario_note(column)
+    title = f"{task.name} · 性能压测"
+    if fmt == "html":
+        content = render_perf_matrix_document([column], note, title)
+        return f"perf-task-{task_id}.html", content, "text/html; charset=utf-8"
+    lines = [f"# {title}", "", *render_perf_matrix_markdown([column], note)]
+    return f"perf-task-{task_id}.md", "\n".join(lines) + "\n", "text/markdown; charset=utf-8"

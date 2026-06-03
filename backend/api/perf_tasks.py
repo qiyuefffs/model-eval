@@ -1,6 +1,7 @@
 """性能压测任务 REST 路由。"""
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
+from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.schemas.perf_task import PerfTaskCreate, PerfTaskRead
@@ -62,3 +63,49 @@ async def get_perf_task_endpoint(
         return await perf_task_service.get_perf_task_read(session, task_id)
     except perf_task_service.PerfTaskNotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+
+
+@router.get(
+    "/{task_id}/export.csv",
+    summary="导出性能压测完整指标",
+    description="导出任务参数、EvalScope 摘要、Percentile、客户端派生指标和 vLLM 服务端指标。",
+)
+async def export_perf_task_csv_endpoint(
+    task_id: int = Path(..., ge=1, description="性能压测任务 id"),
+    session: AsyncSession = Depends(get_session),
+) -> Response:
+    try:
+        filename, content = await perf_task_service.export_perf_task_csv(session, task_id)
+        return Response(
+            content=content,
+            media_type="text/csv; charset=utf-8",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+    except perf_task_service.PerfTaskNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    except perf_task_service.PerfTaskValidationError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
+
+
+@router.get(
+    "/{task_id}/export.report",
+    summary="导出性能压测精简指标矩阵",
+    description="按图二风格导出精简指标矩阵（行=指标，列=并发），格式支持 Markdown / HTML。",
+)
+async def export_perf_task_report_endpoint(
+    task_id: int = Path(..., ge=1, description="性能压测任务 id"),
+    export_format: str = Query(default="markdown", alias="format", description="导出格式：markdown 或 html"),
+    session: AsyncSession = Depends(get_session),
+) -> Response:
+    fmt = "html" if export_format.lower() == "html" else "markdown"
+    try:
+        filename, content, media_type = await perf_task_service.export_perf_task_report(session, task_id, fmt)
+        return Response(
+            content=content,
+            media_type=media_type,
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+    except perf_task_service.PerfTaskNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    except perf_task_service.PerfTaskValidationError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
